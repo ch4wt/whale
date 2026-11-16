@@ -1,0 +1,2277 @@
+:root {
+  --bg: #ffffff;
+  --bg-soft: #f6f7fb;
+  --text: #1a1a1a;
+  --text-dim: #6b7280;
+  --line: #e5e7eb;
+  --brand: #4d6bfe;
+  --brand-soft: #eef2ff;
+  --danger: #e5484d;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+.login {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 24px;
+  background: var(--bg-soft);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 28px 24px;
+  border-radius: 20px;
+  background: var(--bg);
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--brand-soft);
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.brand.small .brand-logo {
+  width: 28px;
+  height: 28px;
+}
+
+.brand.small .brand-name {
+  font-size: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.field span {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.field input {
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  outline: none;
+  background: var(--bg);
+}
+
+.field input:focus {
+  border-color: var(--brand);
+}
+
+.primary {
+  width: 100%;
+  height: 44px;
+  margin-top: 6px;
+  border: none;
+  border-radius: 12px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 500;
+}
+
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 820px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar .brand {
+  margin-bottom: 0;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.topbar select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg);
+  max-width: 220px;
+}
+
+.ghost {
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: none;
+  color: var(--text-dim);
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty {
+  margin: auto;
+  text-align: center;
+}
+
+.empty-title {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.empty-sub {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.bubble {
+  max-width: 86%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: var(--brand);
+  color: #fff;
+}
+
+.bubble.assistant {
+  align-self: flex-start;
+  background: var(--bg-soft);
+}
+
+.composer {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  padding: 12px 16px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.composer textarea {
+  flex: 1;
+  max-height: 160px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  resize: none;
+  outline: none;
+}
+
+.composer textarea:focus {
+  border-color: var(--brand);
+}
+
+.composer .primary {
+  width: 88px;
+  margin: 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border-radius: 12px;
+  background: var(--bg-soft);
+}
+
+.tab {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 9px;
+  background: none;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.tab.active {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+.tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.notice {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--brand);
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 首页：照 deepseek.com 的深色版式 */
+.landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #0d0f12;
+  color: #f2f3f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 44px;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.landing-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.landing-cta {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 120px;
+}
+
+.landing-composer {
+  width: 100%;
+  max-width: 820px;
+  padding: 26px 26px 18px;
+  border: 1px solid #2b3038;
+  border-radius: 26px;
+  background: #14171c;
+}
+
+.landing-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  color: #f2f3f5;
+  font-size: 21px;
+  line-height: 1.5;
+  padding: 6px 4px 44px;
+}
+
+.landing-field::placeholder {
+  color: #8b919a;
+}
+
+.landing-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #2f353e;
+  border-radius: 999px;
+  background: none;
+  color: #b6bcc6;
+  font-size: 13px;
+}
+
+.landing-tool.on {
+  border-color: #4d6bfe;
+  color: #9fb2ff;
+  background: rgba(77, 107, 254, 0.12);
+}
+
+.landing-tool-icon {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.landing-send {
+  width: 38px;
+  height: 38px;
+  margin-left: auto;
+  border: none;
+  border-radius: 50%;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.landing-footer {
+  padding: 24px;
+  border-top: 1px solid #1b1f25;
+  color: #6b7280;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 首页：照 deepseek.com 的深色版式 */
+.landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #0d0f12;
+  color: #f2f3f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 44px;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.landing-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.landing-cta {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 120px;
+}
+
+.landing-composer {
+  width: 100%;
+  max-width: 820px;
+  padding: 26px 26px 18px;
+  border: 1px solid #2b3038;
+  border-radius: 26px;
+  background: #14171c;
+}
+
+.landing-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  color: #f2f3f5;
+  font-size: 21px;
+  line-height: 1.5;
+  padding: 6px 4px 44px;
+}
+
+.landing-field::placeholder {
+  color: #8b919a;
+}
+
+.landing-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #2f353e;
+  border-radius: 999px;
+  background: none;
+  color: #b6bcc6;
+  font-size: 13px;
+}
+
+.landing-tool.on {
+  border-color: #4d6bfe;
+  color: #9fb2ff;
+  background: rgba(77, 107, 254, 0.12);
+}
+
+.landing-tool-icon {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.landing-send {
+  width: 38px;
+  height: 38px;
+  margin-left: auto;
+  border: none;
+  border-radius: 50%;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.landing-footer {
+  padding: 24px;
+  border-top: 1px solid #1b1f25;
+  color: #6b7280;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* 首页：对齐官方对话入口 */
+.lp {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background:
+    radial-gradient(120% 90% at 18% 0%, #f4f8ff 0%, rgba(244, 248, 255, 0) 60%),
+    linear-gradient(160deg, #e9f1ff 0%, #dfe9ff 55%, #d8e4ff 100%);
+  color: #1c1f24;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 40px;
+}
+
+.lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.lp-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.lp-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #22262d;
+}
+
+.lp-download {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2f63f5;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(31, 63, 134, 0.12);
+}
+
+.lp-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 20px 24px 140px;
+}
+
+.lp-card {
+  width: 100%;
+  max-width: 700px;
+  padding: 22px 22px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 18px 44px rgba(35, 68, 143, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+}
+
+.lp-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  padding: 6px 4px 46px;
+  font-size: 20px;
+  line-height: 1.5;
+  color: #1c1f24;
+}
+
+.lp-field::placeholder {
+  color: #98a1b2;
+}
+
+.lp-pills {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border: 1px solid #e4e9f3;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #3d4350;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.lp-pill.on-plain {
+  border-color: #cdd6e6;
+  color: #1f2530;
+}
+
+.lp-pill.on-blue {
+  border-color: #c2d3ff;
+  background: #ecf2ff;
+  color: #2f63f5;
+}
+
+.lp-cta-row {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 700px;
+}
+
+.lp-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2530;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(35, 68, 143, 0.14);
+}
+
+.lp-cta:hover {
+  box-shadow: 0 12px 30px rgba(35, 68, 143, 0.2);
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 首页：照 deepseek.com 的深色版式 */
+.landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #0d0f12;
+  color: #f2f3f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 44px;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.landing-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.landing-cta {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 120px;
+}
+
+.landing-composer {
+  width: 100%;
+  max-width: 820px;
+  padding: 26px 26px 18px;
+  border: 1px solid #2b3038;
+  border-radius: 26px;
+  background: #14171c;
+}
+
+.landing-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  color: #f2f3f5;
+  font-size: 21px;
+  line-height: 1.5;
+  padding: 6px 4px 44px;
+}
+
+.landing-field::placeholder {
+  color: #8b919a;
+}
+
+.landing-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #2f353e;
+  border-radius: 999px;
+  background: none;
+  color: #b6bcc6;
+  font-size: 13px;
+}
+
+.landing-tool.on {
+  border-color: #4d6bfe;
+  color: #9fb2ff;
+  background: rgba(77, 107, 254, 0.12);
+}
+
+.landing-tool-icon {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.landing-send {
+  width: 38px;
+  height: 38px;
+  margin-left: auto;
+  border: none;
+  border-radius: 50%;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.landing-footer {
+  padding: 24px;
+  border-top: 1px solid #1b1f25;
+  color: #6b7280;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 登录页要盖住 demo 的深色主题变量，避免白底白字 */
+.login,
+.login .brand-name,
+.login .field span,
+.login input,
+.login .tab {
+  color: #1a1a1a;
+}
+
+.login input {
+  background: #fff;
+}
+
+.login .tab.active {
+  color: #1a1a1a;
+}
+
+.login .tab:not(.active) {
+  color: #6b7280;
+}
+
+/* 首页：照 deepseek.com 的深色版式 */
+.landing {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #0d0f12;
+  color: #f2f3f5;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 44px;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.landing-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.landing-cta {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.landing-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 120px;
+}
+
+.landing-composer {
+  width: 100%;
+  max-width: 820px;
+  padding: 26px 26px 18px;
+  border: 1px solid #2b3038;
+  border-radius: 26px;
+  background: #14171c;
+}
+
+.landing-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  color: #f2f3f5;
+  font-size: 21px;
+  line-height: 1.5;
+  padding: 6px 4px 44px;
+}
+
+.landing-field::placeholder {
+  color: #8b919a;
+}
+
+.landing-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid #2f353e;
+  border-radius: 999px;
+  background: none;
+  color: #b6bcc6;
+  font-size: 13px;
+}
+
+.landing-tool.on {
+  border-color: #4d6bfe;
+  color: #9fb2ff;
+  background: rgba(77, 107, 254, 0.12);
+}
+
+.landing-tool-icon {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.landing-send {
+  width: 38px;
+  height: 38px;
+  margin-left: auto;
+  border: none;
+  border-radius: 50%;
+  background: #4d6bfe;
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.landing-footer {
+  padding: 24px;
+  border-top: 1px solid #1b1f25;
+  color: #6b7280;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* 首页：对齐官方对话入口 */
+.lp {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background:
+    radial-gradient(120% 90% at 18% 0%, #f4f8ff 0%, rgba(244, 248, 255, 0) 60%),
+    linear-gradient(160deg, #e9f1ff 0%, #dfe9ff 55%, #d8e4ff 100%);
+  color: #1c1f24;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 40px;
+}
+
+.lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.lp-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.lp-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #22262d;
+}
+
+.lp-download {
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2f63f5;
+  font-size: 14px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(31, 63, 134, 0.12);
+}
+
+.lp-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 20px 24px 140px;
+}
+
+.lp-card {
+  width: 100%;
+  max-width: 700px;
+  padding: 22px 22px 16px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 18px 44px rgba(35, 68, 143, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+}
+
+.lp-field {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: none;
+  padding: 6px 4px 46px;
+  font-size: 20px;
+  line-height: 1.5;
+  color: #1c1f24;
+}
+
+.lp-field::placeholder {
+  color: #98a1b2;
+}
+
+.lp-pills {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.lp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 15px;
+  border: 1px solid #e4e9f3;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #3d4350;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.lp-pill.on-plain {
+  border-color: #cdd6e6;
+  color: #1f2530;
+}
+
+.lp-pill.on-blue {
+  border-color: #c2d3ff;
+  background: #ecf2ff;
+  color: #2f63f5;
+}
+
+.lp-cta-row {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 700px;
+}
+
+.lp-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2530;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(35, 68, 143, 0.14);
+}
+
+.lp-cta:hover {
+  box-shadow: 0 12px 30px rgba(35, 68, 143, 0.2);
+}
+
+/* 首页：数值抄自 deepseek.com 的真实 CSS */
+.lp {
+  --lp-brand: #4176e6;
+  --lp-text: #1e232c;
+  --lp-text-bluish: #152443;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  overflow: hidden;
+  background: #dfe9f7;
+  color: var(--lp-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+}
+
+/* 低多边形流动背景的近似：多层渐变 + 网格 */
+.lp::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(45% 40% at 8% 4%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(180deg, #a2c3e7 0%, #b8d2ec 33%, #cbdcef 52%, #e3eaf4 78%, #f5f6f7 100%);
+}
+
+.lp::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.18) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, transparent 1px 96px);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0.35) 55%, transparent 88%);
+}
+
+.lp-nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 1150px;
+  margin: 0 auto;
+  padding: 22px 0;
+}
+
+.lp-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.lp-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.lp-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--lp-text-bluish);
+}
+
+.lp-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lp-getapp {
+  padding: 7px 15px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(9, 45, 78, 0.18);
+  color: var(--lp-text);
+  font-size: 14px;
+  text-decoration: none;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.lp-main {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  padding: 197px 24px 160px;
+}
+
+.lp-title {
+  margin: 0 auto;
+  width: fit-content;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  font-size: 46px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0.4em;
+  text-indent: 0.4em;
+  text-align: center;
+  color: var(--lp-text-bluish);
+  opacity: 0.92;
+}
+
+.lp-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  max-width: 880px;
+  padding: 4px 10px 10px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 24px;
+  background-color: rgba(255, 255, 255, 0.36);
+  cursor: text;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.lp-field {
+  width: 100%;
+  min-height: 80px;
+  max-height: 300px;
+  padding: 12px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--lp-text);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.4em;
+  overflow-y: auto;
+  resize: none;
+}
+
+.lp-field::placeholder {
+  color: rgba(45, 55, 72, 0.7);
+  opacity: 1;
+}
+
+.lp-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.lp-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--lp-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.lp-pill.on {
+  border-color: rgba(65, 118, 230, 0.3);
+  background-color: rgba(65, 118, 230, 0.12);
+  color: var(--lp-brand);
+}
+
+.lp-send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--lp-brand);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.lp-actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 880px;
+  margin: 0;
+}
+
+.lp-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 34px;
+  min-width: 210px;
+  justify-content: center;
+  height: 44px;
+  line-height: 20px;
+  box-sizing: border-box;
+  border: 1px solid rgba(9, 45, 78, 0.18);
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--lp-text);
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.35s ease;
+}
+
+.lp-action:hover {
+  border-color: rgba(9, 45, 78, 0.36);
+}
+
+/* 获取 App 弹窗 */
+.lp-getapp {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.lp-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 30, 45, 0.32);
+  backdrop-filter: blur(4px);
+}
+
+.lp-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 320px;
+  padding: 24px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(20, 40, 80, 0.24);
+}
+
+.lp-dialog-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: #152443;
+}
+
+.lp-dialog-sub {
+  font-size: 13px;
+  color: #6f7a8b;
+}
+
+.lp-qr {
+  margin: 6px 0;
+  padding: 8px;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.lp-qr svg {
+  display: block;
+  width: 176px;
+  height: 176px;
+}
+
+.lp-copy {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.lp-copy input {
+  flex: 1;
+  background: #ffffff;
+  -webkit-text-fill-color: #1f252e;
+  min-width: 0;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #1f252e;
+  opacity: 1;
+}
+
+.lp-copy button {
+  height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 10px;
+  background: #4176e6;
+  color: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.lp-dialog-close {
+  margin-top: 4px;
+  border: none;
+  background: none;
+  color: #6f7a8b;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* 悬停下载二维码 */
+.dl-popover {
+  position: absolute;
+  left: calc(100% + 10px);
+  bottom: 0;
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 14px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: #2b2e35;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
+}
+
+.dl-qr {
+  position: relative;
+  width: 168px;
+  height: 168px;
+  padding: 8px;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.dl-qr-code svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.dl-qr-logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #ffffff;
+  border-radius: 10px;
+  transform: translate(-50%, -50%);
+}
+
+.dl-caption {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.dl-copy {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-top: 2px;
+}
+
+.dl-copy input {
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
+  outline: none;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.78);
+}
+
+.dl-copy button {
+  height: 28px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 8px;
+  background: #4176e6;
+  color: #ffffff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* 用量与余额 */
+.usage {
+  min-height: 100%;
+  padding: 32px 40px 60px;
+  background: #0f1115;
+  color: #f2f3f5;
+  font-family: system-ui, -apple-system, 'PingFang SC', sans-serif;
+}
+
+.usage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 980px;
+  margin: 0 auto 22px;
+}
+
+.usage-title {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.usage-back {
+  color: #9aa1ab;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.usage-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  max-width: 980px;
+  margin: 0 auto 22px;
+}
+
+.usage-card {
+  padding: 18px 20px;
+  border: 1px solid #23272e;
+  border-radius: 14px;
+  background: #15181d;
+}
+
+.usage-label {
+  font-size: 12px;
+  color: #8a8f98;
+}
+
+.usage-value {
+  margin-top: 8px;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.usage-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #7d838c;
+}
+
+.usage-table {
+  max-width: 980px;
+  margin: 0 auto;
+  border: 1px solid #23272e;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.usage-table-head,
+.usage-row {
+  display: grid;
+  grid-template-columns: 120px 1fr 90px 90px 90px;
+  gap: 8px;
+  padding: 11px 16px;
+  font-size: 13px;
+}
+
+.usage-table-head {
+  background: #15181d;
+  color: #8a8f98;
+}
+
+.usage-row {
+  border-top: 1px solid #1c2026;
+  color: #d7dbe0;
+}
+
+.usage-row .model {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.usage-row .num,
+.usage-table-head .num {
+  text-align: right;
+}
+
+.usage-empty {
+  padding: 26px;
+  color: #8a8f98;
+  font-size: 13px;
+}
+
+.usage-error {
+  max-width: 980px;
+  margin: 0 auto 14px;
+  color: #f2555a;
+  font-size: 13px;
+}
+
+.usage-foot {
+  max-width: 980px;
+  margin: 12px auto 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* 用量页：充值按钮与弹窗 */
+.usage-head-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.usage-recharge {
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: #4176e6;
+  color: #ffffff;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.usage-chart {
+  max-width: 980px;
+  margin: 0 auto 22px;
+  padding: 16px 18px 6px;
+  border: 1px solid #23272e;
+  border-radius: 14px;
+  background: #15181d;
+}
+
+.usage-chart-title {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: #8a8f98;
+}
+
+.usage-chart-svg {
+  display: block;
+  width: 100%;
+  height: 140px;
+}
+
+.usage-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 14, 0.6);
+}
+
+.usage-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 340px;
+  padding: 22px;
+  border-radius: 16px;
+  background: #1c1f26;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.usage-dialog-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.usage-dialog-note {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #9aa1ab;
+}
+
+.usage-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  color: #8a8f98;
+}
+
+.usage-field input {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #2a2f36;
+  border-radius: 10px;
+  background: #12151a;
+  color: #f2f3f5;
+  font-size: 15px;
+  outline: none;
+}
+
+.usage-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.usage-method {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid #2a2f36;
+  border-radius: 999px;
+  background: none;
+  color: #c9cdd4;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.usage-method.on {
+  border-color: #4176e6;
+  background: rgba(65, 118, 230, 0.14);
+  color: #6f92f0;
+}
+
+.usage-dialog-pay,
+.usage-dialog-close {
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: #4176e6;
+  color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.usage-dialog-error {
+  font-size: 12px;
+  color: #f2555a;
+}
+
+/* 用量页顶部导航 */
+.usage-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  max-width: 980px;
+  margin: 0 auto 26px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #1c2026;
+}
+
+.usage-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #f2f3f5;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.usage-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+}
+
+.usage-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.usage-links a {
+  color: #8a8f98;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.usage-links a.on {
+  color: #f2f3f5;
+}
+
+/* 用量信息页：对齐 DeepSeek 开放平台 */
+.pf {
+  display: flex;
+  min-height: 100%;
+  background: #101114;
+  color: #f2f3f5;
+  font-family: system-ui, -apple-system, 'PingFang SC', sans-serif;
+}
+
+.pf-side {
+  display: flex;
+  flex-direction: column;
+  width: 244px;
+  flex-shrink: 0;
+  padding: 22px 14px;
+  background: #0b0c0e;
+}
+
+.pf-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 8px 22px;
+  color: #f2f3f5;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pf-logo img {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.pf-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pf-nav a,
+.pf-nav button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: #c9cdd4;
+  font-size: 14px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pf-nav a.on {
+  background: #23262c;
+  color: #ffffff;
+}
+
+.pf-nav a:hover,
+.pf-nav button:hover {
+  background: #1a1d22;
+}
+
+.pf-side-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: auto;
+  padding: 0 12px;
+}
+
+.pf-side-bottom a,
+.pf-side-bottom button {
+  border: none;
+  background: none;
+  color: #8a8f98;
+  font-size: 13px;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 8px 0;
+}
+
+.pf-main {
+  flex: 1;
+  min-width: 0;
+  padding: 34px 48px 60px;
+}
+
+.pf-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.pf-note {
+  margin-top: 8px;
+  color: #7d838c;
+  font-size: 13px;
+}
+
+.pf-error {
+  margin-top: 14px;
+  color: #f2555a;
+  font-size: 13px;
+}
+
+.pf-balance-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.pf-balance {
+  padding: 22px 24px;
+  border-radius: 14px;
+  background: #1b1e23;
+}
+
+.pf-balance-label {
+  color: #9aa1ab;
+  font-size: 13px;
+}
+
+.pf-balance-value {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.pf-unit {
+  color: #8a8f98;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.pf-topup {
+  margin-left: auto;
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #101114;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pf-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.pf-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  background: #1b1e23;
+  color: #9aa1ab;
+  font-size: 13px;
+}
+
+.pf-select select {
+  border: none;
+  outline: none;
+  background: none;
+  color: #f2f3f5;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.pf-export {
+  margin-left: auto;
+  height: 40px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #101114;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pf-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pf-stat {
+  padding: 20px 22px;
+  border-radius: 14px;
+  background: #1b1e23;
+}
+
+.pf-stat-label {
+  color: #9aa1ab;
+  font-size: 13px;
+}
+
+.pf-stat-value {
+  margin-top: 14px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.pf-chart-card {
+  margin-top: 16px;
+  padding: 18px 22px 8px;
+  border-radius: 14px;
+  background: #1b1e23;
+}
+
+.pf-chart-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.pf-chart-title {
+  color: #c9cdd4;
+  font-size: 13px;
+}
+
+.pf-chart-total {
+  margin-left: 8px;
+  color: #f2f3f5;
+  font-size: 13px;
+}
+
+.pf-seg {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: #23262c;
+}
+
+.pf-seg button {
+  height: 26px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  color: #9aa1ab;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pf-seg button.on {
+  background: #3a3f47;
+  color: #ffffff;
+}
+
+.pf-chart-svg {
+  display: block;
+  width: 100%;
+  height: 260px;
+}
+
+.pf-empty {
+  padding: 40px 0;
+  color: #8a8f98;
+}
+
+@media (max-width: 900px) {
+  .pf-side {
+    display: none;
+  }
+
+  .pf-main {
+    padding: 20px 18px 40px;
+  }
+
+  .pf-balance-row,
+  .pf-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 首页顶部公告 */
+.lp-news {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 620px;
+  margin: 0 auto 28px;
+  color: rgba(30, 45, 70, 0.6);
+  font-size: 13px;
+  line-height: 1.9;
+  text-align: center;
+}
+
+.lp-news-icon {
+  flex-shrink: 0;
+  color: #4d6bfe;
+  font-size: 12px;
+  line-height: 2;
+}
+
+/* 用量页侧栏：进入对话按钮与账号 */
+.pf-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  margin: auto 8px 10px;
+  border-radius: 10px;
+  background: #4176e6;
+  color: #ffffff;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.pf-cta:hover {
+  background: #5081ea;
+}
+
+.pf-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 0;
+  padding: 12px 8px 0;
+  border-top: 1px solid #1c2026;
+  color: #c9cdd4;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pf-account img {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
