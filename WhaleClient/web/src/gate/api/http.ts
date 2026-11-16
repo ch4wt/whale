@@ -1,0 +1,66 @@
+/** 统一的 HTTP 封装：处理 new-api 的 {success, message, data} 包装 */
+
+export type ApiEnvelope<T> = { success: boolean; message?: string; data?: T }
+
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status?: number
+  ) {
+    super(message)
+    this.name = 'ApiError'
+  }
+}
+
+export const normalizeServer = (input: string): string => {
+  const raw = input.trim()
+  // 留空 = 与页面同源（走自带代理）
+  if (!raw) return location.origin
+  const withScheme = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`
+  return withScheme.replace(/\/+$/, '')
+}
+
+export const request = async <T>(
+  server: string,
+  path: string,
+  init: RequestInit & { bearer?: string; json?: unknown } = {}
+): Promise<T> => {
+  const { bearer, json, headers, ...rest } = init
+  const finalHeaders = new Headers(headers)
+  if (json !== undefined) finalHeaders.set('Content-Type', 'application/json')
+  if (bearer) finalHeaders.set('Authorization', `Bearer ${bearer}`)
+
+  let response: Response
+  try {
+    response = await fetch(`${server}${path}`, {
+      ...rest,
+      headers: finalHeaders,
+      body: json !== undefined ? JSON.stringify(json) : rest.body,
+    })
+  } catch (error) {
+    throw new ApiError(`连不上服务器：${(error as Error).message}`)
+  }
+
+  const text = await response.text()
+  let body: ApiEnvelope<T> | null = null
+  try {
+    body = text ? (JSON.parse(text) as ApiEnvelope<T>) : null
+  } catch {
+    throw new ApiError(text.slice(0, 200) || `HTTP ${response.status}`, response.status)
+  }
+
+  if (!response.ok || body?.success === false) {
+    throw new ApiError(body?.message || `HTTP ${response.status}`, response.status)
+  }
+  return (body?.data ?? (body as unknown)) as T
+}
+
+export const requestRaw = async (
+  server: string,
+  path: string,
+  init: RequestInit & { bearer?: string } = {}
+): Promise<Response> => {
+  const headers = new Headers(init.headers)
+  if (init.bearer) headers.set('Authorization', `Bearer ${init.bearer}`)
+  return fetch(`${server}${path}`, { ...init, headers })
+}
