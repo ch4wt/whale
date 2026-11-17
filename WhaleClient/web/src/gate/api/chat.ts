@@ -5,7 +5,7 @@ import { request, requestRaw } from './http.js'
 const KEY_NAME = 'WhaleClient Web'
 const KEY_STORAGE = 'whaleclient:apikey'
 
-type TokenRow = { id: number; name: string; key?: string }
+type TokenRow = { id: number; name: string; status?: number; key?: string }
 type TokenList = TokenRow[] | { items?: TokenRow[]; data?: TokenRow[] }
 
 const rows = (list: TokenList): TokenRow[] =>
@@ -26,16 +26,21 @@ const rememberKey = (server: string, key: string): void => {
   localStorage.setItem(KEY_STORAGE, JSON.stringify({ server, key }))
 }
 
+/** 换账号登录前清掉上个账号缓存的 Key，否则会拿别人的 Key 聊天 */
+export const forgetApiKey = (): void => {
+  localStorage.removeItem(KEY_STORAGE)
+}
+
 /** 找到或创建一个 API Key；PAT 需要 api_key:read / reveal / write 三个权限 */
 export const ensureApiKey = async (auth: StoredAuth): Promise<string> => {
   const cached = cachedKey(auth.server)
   if (cached) return cached
 
-  const list = await request<TokenList>(auth.server, '/api/token/?p=1&size=100', {
+  const list = await request<TokenList>(auth.server, '/api/token/?p=1&page_size=100', {
     method: 'GET',
     bearer: auth.token,
   })
-  const existing = rows(list).find((row) => row.name === KEY_NAME)
+  const existing = rows(list).find((row) => row.name === KEY_NAME && row.status === 1)
   if (existing) {
     const revealed = await request<{ key: string }>(auth.server, `/api/token/${existing.id}/key`, {
       method: 'POST',
@@ -60,11 +65,11 @@ export const ensureApiKey = async (auth: StoredAuth): Promise<string> => {
     },
   })
 
-  const after = await request<TokenList>(auth.server, '/api/token/?p=1&size=100', {
+  const after = await request<TokenList>(auth.server, '/api/token/?p=1&page_size=100', {
     method: 'GET',
     bearer: auth.token,
   })
-  const created = rows(after).find((row) => row.name === KEY_NAME)
+  const created = rows(after).find((row) => row.name === KEY_NAME && row.status === 1)
   if (!created) throw new Error('创建 API Key 后没有找到它')
   const revealed = await request<{ key: string }>(auth.server, `/api/token/${created.id}/key`, {
     method: 'POST',

@@ -1,5 +1,6 @@
 /** 登录会话（new-api 账号 + PAT），供侧栏账号块读取 */
 import { clearAuth, loadAuth, type StoredAuth } from './api/auth.js'
+import { forgetApiKey } from './api/chat.js'
 
 const USER_STORAGE = 'whaleclient:user'
 const API_KEY_STORAGE = 'chat-demo:api-key'
@@ -27,6 +28,7 @@ export const shortServer = (server: string): string => server.replace(/^https?:\
 
 export const signOut = (): void => {
   clearAuth()
+  forgetApiKey()
   localStorage.removeItem(USER_STORAGE)
   localStorage.removeItem(API_KEY_STORAGE)
   location.reload()

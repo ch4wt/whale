@@ -425,7 +425,7 @@ const errorStatus = (key: TranslationKey, error: unknown): Status => ({
 
 /** 账号管理：数据来自 new-api 的用户信息 */
 const AccountPanel = () => {
-  const auth = loadAuth()
+  const [auth] = useState(loadAuth)
   const [profile, setProfile] = useState<{ username?: string; email?: string } | null>(null)
 
   useEffect(() => {

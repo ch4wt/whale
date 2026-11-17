@@ -194,7 +194,8 @@ const Recharge = ({ auth, onClose }: { auth: NonNullable<ReturnType<typeof loadA
 }
 
 export const Usage = () => {
-  const auth = loadAuth()
+  // 只读一次：每次渲染新建对象会让下面的 effect 反复请求
+  const [auth] = useState(loadAuth)
   const [self, setSelf] = useState<Self | null>(null)
   const [status, setStatus] = useState<Status>({})
   const [logs, setLogs] = useState<LogRow[]>([])
@@ -205,6 +206,10 @@ export const Usage = () => {
 
   useEffect(() => {
     if (!auth) return
+    if (auth.keyOnly) {
+      setError('当前账号是微信登录且未设置密码或两步验证，无法查看用量。请在网页控制台设置密码后，用账号密码重新登录。')
+      return
+    }
     let alive = true
     const now = Math.floor(Date.now() / 1000)
     ;(async () => {
