@@ -993,14 +993,13 @@ const streamReply = async (sessionId: string, initial: AssistantMessage, request
           prepared.history,
           prepared.question,
           prepared.prefix,
-          initial.thinking ?? false,
-          latestReminder
+          initial.thinking ?? false
         )
         const events = streamMessage(
           useSettings.getState().apiKey ?? '',
           {
             model: initial.model ?? MODEL,
-            system: SYSTEM_PROMPT,
+            system: latestReminder ? `${SYSTEM_PROMPT}\n${latestReminder}` : SYSTEM_PROMPT,
             messages,
             thinking: { type: initial.thinking ? 'enabled' : 'disabled' },
             safety_check: SAFETY_CHECK,

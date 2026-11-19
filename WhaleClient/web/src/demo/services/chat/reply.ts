@@ -299,32 +299,22 @@ export const getContextRounds = (history: Message[]): [UserMessage, AssistantMes
 /**
  * 把会话转成请求的 messages：只保留「提问 + 有回答的回复」成对的轮次，最后接上本轮提问。
  * 失败或没有回答的轮次不进上下文。续写时末尾再带上本轮 assistant。
+ * 环境提醒由调用方放入顶层 system，不作为自定义角色发送。
  */
 export const toRequestMessages = (
   history: Message[],
   question: UserMessage,
   prefix?: AssistantMessage,
-  thinking = prefix?.thinking ?? false,
-  latestReminder?: string
+  thinking = prefix?.thinking ?? false
 ): MessageParam[] => {
   const messages: MessageParam[] = []
-  let previousReminder: string | undefined
-  const appendReminder = (reminder: string | undefined) => {
-    // 仅在当前分支首次出现或内容变化时插入快照；缺少快照的消息保持原有内容。
-    if (reminder && reminder !== previousReminder) {
-      messages.push({ role: 'latest_reminder', content: reminder })
-      previousReminder = reminder
-    }
-  }
   for (const [user, reply] of getContextRounds(history)) {
     // 历史提问没有文字、附件也都没有 serverId 时，提问为空，连同回答一起省略。
     if (!user.content && toFileBlocks(user.files).length === 0) {
       continue
     }
-    appendReminder(reply.latestReminder)
     messages.push(toUserParam(user), toAssistantParam(reply))
   }
-  appendReminder(latestReminder)
   messages.push(toUserParam(question))
   if (prefix?.prefix) {
     const assistant = toAssistantParam(prefix, true, thinking)
