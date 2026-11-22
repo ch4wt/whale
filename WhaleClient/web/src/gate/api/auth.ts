@@ -5,8 +5,16 @@
 import { ensureApiKey, forgetApiKey } from './chat.js'
 import { ApiError, normalizeServer, request } from './http.js'
 
-/** usage:read、wallet:read 给用量与余额页用 */
-export const PAT_SCOPES = ['api_key:read', 'api_key:reveal', 'api_key:write', 'profile:read', 'usage:read', 'wallet:read']
+/** usage:read、wallet:read 给用量与余额页用；wallet:write 给充值（易支付下单、兑换码）用 */
+export const PAT_SCOPES = [
+  'api_key:read',
+  'api_key:reveal',
+  'api_key:write',
+  'profile:read',
+  'usage:read',
+  'wallet:read',
+  'wallet:write',
+]
 const PAT_LIFETIME_SECONDS = 90 * 24 * 3600
 
 export type StoredAuth = {
@@ -16,7 +24,12 @@ export type StoredAuth = {
   user?: { id?: number; username?: string; display_name?: string; quota?: number }
   /** 没有长期令牌，只缓存了 API Key（见 keyOnlyAuth）：能聊天，不能调管理接口 */
   keyOnly?: boolean
+  /** PAT 的权限；旧版本登录保存的凭证没有这个字段 */
+  scopes?: string[]
 }
+
+/** 旧凭证不记录 scopes，一律视为没有，需要重新登录换新 PAT */
+export const hasScope = (auth: StoredAuth, scope: string): boolean => Boolean(auth.scopes?.includes(scope))
 
 const STORAGE_KEY = 'whaleclient:auth'
 
@@ -183,7 +196,7 @@ const createAccessToken = async (pending: PendingSession, verification: Record<s
 
   await endSession(pending)
   forgetApiKey()
-  const auth: StoredAuth = { server, token: created.token, expiresAt }
+  const auth: StoredAuth = { server, token: created.token, expiresAt, scopes }
   saveAuth(auth)
   return auth
 }

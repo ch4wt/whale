@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchSelf, loadAuth } from '../api/auth.js'
 import { request } from '../api/http.js'
+import { Recharge } from './Recharge.js'
 
 type Self = { username?: string; quota?: number; used_quota?: number; request_count?: number }
 type LogRow = {
@@ -10,7 +11,7 @@ type LogRow = {
   completion_tokens?: number
   quota?: number
 }
-type Status = { quota_per_unit?: number; usd_exchange_rate?: number }
+type Status = { quota_per_unit?: number; usd_exchange_rate?: number; quota_display_type?: string }
 type LogPage = { items?: LogRow[]; total?: number }
 type QuotaRow = { created_at: number; quota?: number; token_used?: number; model_name?: string }
 
@@ -156,39 +157,6 @@ const Chart = ({
           </text>
         ))}
       </svg>
-    </div>
-  )
-}
-
-const Recharge = ({ auth, onClose }: { auth: NonNullable<ReturnType<typeof loadAuth>>; onClose: () => void }) => {
-  const [info, setInfo] = useState<{ pay_methods?: { name: string; type: string }[]; min_topup?: number } | null>(null)
-  useEffect(() => {
-    request<{ pay_methods?: { name: string; type: string }[]; min_topup?: number }>(
-      auth.server,
-      '/api/user/topup/info',
-      { method: 'GET', bearer: auth.token }
-    )
-      .then((value) => setInfo(value ?? {}))
-      .catch(() => setInfo({}))
-  }, [auth])
-
-  return (
-    <div className="usage-mask" onClick={onClose}>
-      <div className="usage-dialog" onClick={(event) => event.stopPropagation()}>
-        <div className="usage-dialog-title">充值</div>
-        {info && (info.pay_methods ?? []).length === 0 ? (
-          <>
-            <div className="usage-dialog-note">
-              管理员还没有开启在线充值。请把用户名发给管理员，由管理员给账号加额度。
-            </div>
-            <button type="button" className="usage-dialog-close" onClick={onClose}>
-              知道了
-            </button>
-          </>
-        ) : (
-          <div className="usage-dialog-note">正在读取支付方式…</div>
-        )}
-      </div>
     </div>
   )
 }
@@ -361,7 +329,18 @@ export const Usage = () => {
         <Chart rows={days} unit={unit} rate={rate} />
       </main>
 
-      {recharging && auth ? <Recharge auth={auth} onClose={() => setRecharging(false)} /> : null}
+      {recharging && auth ? (
+        <Recharge
+          auth={auth}
+          unit={{ quotaPerUnit: unit, rate, displayType: status.quota_display_type }}
+          onClose={() => setRecharging(false)}
+          onPaid={() => {
+            fetchSelf(auth)
+              .then((profile) => setSelf((profile ?? {}) as Self))
+              .catch(() => undefined)
+          }}
+        />
+      ) : null}
     </div>
   )
 }
