@@ -281,6 +281,12 @@ select {
   color: var(--brand);
 }
 
+.turnstile {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0;
+}
+
 .wechat-qr {
   display: block;
   width: 180px;

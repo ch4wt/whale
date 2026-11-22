@@ -10,6 +10,7 @@ import {
   type ServerStatus,
   type StoredAuth,
 } from '../api/auth.js'
+import { Turnstile } from './Turnstile.js'
 
 const LAST_SERVER = 'whaleclient:server'
 /** 默认服务器；用户改过就以本地保存的为准 */
@@ -35,6 +36,9 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  /** 换 key 让验证框重新挂载，拿一个新 token */
+  const [turnstileKey, setTurnstileKey] = useState(0)
 
   useEffect(() => {
     let alive = true
@@ -48,6 +52,14 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
 
   const canRegister = status?.register_enabled !== false && status?.password_register_enabled !== false
   const canWechat = Boolean(status?.wechat_login)
+  // 与主站一致：开关和 site key 都有才算开启。微信登录、两步验证接口不校验 Turnstile
+  const turnstileSiteKey = status?.turnstile_check ? (status.turnstile_site_key ?? '') : ''
+  const showTurnstile = Boolean(turnstileSiteKey) && !step && mode !== 'wechat'
+
+  const resetTurnstile = () => {
+    setTurnstileToken('')
+    setTurnstileKey((key) => key + 1)
+  }
 
   /** 登录结果要么结束，要么进入下一个验证码步骤 */
   const advance = (next: LoginStep) => {
@@ -91,22 +103,36 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
         return
       }
 
+      if (mode === 'register' && password !== confirm) throw new Error('两次密码不一致')
+
+      const turnstile = turnstileSiteKey ? turnstileToken : undefined
+      if (turnstileSiteKey && !turnstile) throw new Error('请先完成人机验证')
+      // token 只能用一次，无论请求成败都换新的
+      if (turnstile) resetTurnstile()
+
       if (mode === 'register') {
-        if (password !== confirm) throw new Error('两次密码不一致')
-        if (status?.turnstile_check) throw new Error('该站开启了人机验证，请在网页后台注册')
         await registerAccount(server, {
           username: username.trim(),
           password,
           email: status?.email_verification ? email.trim() : undefined,
           code: status?.email_verification ? code.trim() : undefined,
+          turnstile,
         })
+        if (turnstile) {
+          // 登录接口也要校验，刚才的 token 已用掉，回登录页让用户再验证一次
+          switchMode('login')
+          setConfirm('')
+          setNotice('注册成功，请完成人机验证后登录')
+          setBusy(false)
+          return
+        }
         setNotice('注册成功，正在登录…')
         onDone(await expectAuth(login(server, username.trim(), password)))
         return
       }
 
       setViaWechat(false)
-      advance(await login(server, username.trim(), password))
+      advance(await login(server, username.trim(), password, turnstile))
     } catch (e) {
       setError((e as Error).message)
       setBusy(false)
@@ -210,6 +236,16 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
             ) : null}
           </>
         )}
+
+        {showTurnstile ? (
+          <Turnstile
+            key={turnstileKey}
+            siteKey={turnstileSiteKey}
+            onVerify={setTurnstileToken}
+            onExpire={() => setTurnstileToken('')}
+            onError={setError}
+          />
+        ) : null}
 
         {error ? <div className="error">{error}</div> : null}
         {notice ? <div className="notice">{notice}</div> : null}

@@ -80,10 +80,19 @@ export type LoginStep =
   | { kind: 'loginCode'; flowToken: string }
   | { kind: 'stepUpCode'; pending: PendingSession }
 
-export const login = async (rawServer: string, username: string, password: string): Promise<LoginStep> => {
+/** 服务端开启 Turnstile 时，new-api 从查询参数 turnstile 读取 token */
+const withTurnstile = (path: string, turnstile?: string): string =>
+  turnstile ? `${path}?turnstile=${encodeURIComponent(turnstile)}` : path
+
+export const login = async (
+  rawServer: string,
+  username: string,
+  password: string,
+  turnstile?: string
+): Promise<LoginStep> => {
   const server = normalizeServer(rawServer)
   const passwordBody = await encryptPassword(server, password)
-  const result = await request<LoginResponse>(server, '/api/user/login', {
+  const result = await request<LoginResponse>(server, withTurnstile('/api/user/login', turnstile), {
     method: 'POST',
     json: { username, ...passwordBody },
   })
@@ -210,6 +219,7 @@ export type ServerStatus = {
   password_register_enabled?: boolean
   email_verification?: boolean
   turnstile_check?: boolean
+  turnstile_site_key?: string
   wechat_login?: boolean
   wechat_qrcode?: string
 }
@@ -219,12 +229,19 @@ export const fetchStatus = async (rawServer: string): Promise<ServerStatus> => {
   return request<ServerStatus>(server, '/api/status', { method: 'GET' })
 }
 
-export type RegisterInput = { username: string; password: string; email?: string; code?: string; affCode?: string }
+export type RegisterInput = {
+  username: string
+  password: string
+  email?: string
+  code?: string
+  affCode?: string
+  turnstile?: string
+}
 
 /** 注册后不会自动登录，服务端只返回成功 */
 export const registerAccount = async (rawServer: string, input: RegisterInput): Promise<void> => {
   const server = normalizeServer(rawServer)
-  await request(server, '/api/user/register', {
+  await request(server, withTurnstile('/api/user/register', input.turnstile), {
     method: 'POST',
     json: {
       username: input.username,
