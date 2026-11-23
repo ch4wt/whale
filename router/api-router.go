@@ -15,6 +15,7 @@ import (
 )
 
 func SetApiRouter(router *gin.Engine) {
+
 	apiRouter := router.Group("/api")
 	apiRouter.Use(middleware.RouteTag("api"))
 	apiRouter.Use(gzip.Gzip(gzip.DefaultCompression))
@@ -154,6 +155,13 @@ func SetApiRouter(router *gin.Engine) {
 			adminRoute.Use(middleware.AdminAuth())
 			{
 				adminRoute.GET("/", controller.GetAllUsers)
+				adminRoute.GET("/funds/overview", controller.GetFundsOverview)
+				adminRoute.GET("/upstream/balance", controller.GetUpstreamBalance)
+				adminRoute.POST("/quota/adjust", controller.AdjustUserQuota)
+				adminRoute.GET("/usage/detail", controller.GetUsageDetail)
+				adminRoute.GET("/platform/overview", controller.GetPlatformOverview)
+				adminRoute.GET("/platform/settings", controller.GetPlatformSettings)
+				adminRoute.PUT("/platform/settings", controller.UpdatePlatformSettings)
 				adminRoute.GET("/topup", controller.GetAllTopUps)
 				adminRoute.POST("/topup/complete", controller.AdminCompleteTopUp)
 				adminRoute.GET("/search", controller.SearchUsers)
