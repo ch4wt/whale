@@ -20,6 +20,8 @@ import { signOut } from '../session.js'
 const PAY_WINDOW = 'whaleclient-pay'
 const POLL_MS = 4000
 const DEFAULT_PRESET_MULTIPLIERS = [1, 5, 10, 30, 50, 100]
+/** 微信内置浏览器会拦截支付宝等收银台 */
+const IN_WECHAT = /MicroMessenger/i.test(navigator.userAgent)
 
 export type QuoteUnit = {
   /** 1 美元对应的 quota */
@@ -207,17 +209,14 @@ export const Recharge = ({ auth, unit, onClose, onPaid }: Props) => {
   }
 
   const body = () => {
-    if (auth.keyOnly) {
-      return (
-        <div className="usage-dialog-note">
-          微信登录且未设置密码的账号暂不支持在这里充值。请在网页控制台设置密码后，用账号密码重新登录。
-        </div>
-      )
-    }
     if (!canPay) {
       return (
         <>
-          <div className="usage-dialog-note">充值需要重新登录一次，以授权本设备发起支付。</div>
+          <div className="usage-dialog-note">
+            {auth.keyOnly
+              ? '本设备还没有完成授权，暂时无法充值。请重新登录，微信登录时按提示在公众号再获取一次验证码即可完成授权。'
+              : '充值需要重新登录一次，以授权本设备发起支付。'}
+          </div>
           <button type="button" className="usage-dialog-pay" onClick={signOut}>
             重新登录
           </button>
@@ -275,6 +274,11 @@ export const Recharge = ({ auth, unit, onClose, onPaid }: Props) => {
 
         {tab === 'online' && methods.length > 0 ? (
           <>
+            {IN_WECHAT ? (
+              <div className="usage-dialog-info">
+                检测到在微信中打开，支付页面可能无法正常跳转。请点右上角，在浏览器中打开后再充值。
+              </div>
+            ) : null}
             <div className="usage-presets">
               {presets.map((value) => {
                 const discount = info.discount?.[String(value)] ?? 1

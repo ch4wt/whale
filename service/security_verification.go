@@ -20,6 +20,7 @@ const (
 	VerificationMethodPasskey            = "passkey"
 	VerificationMethodPassword           = "password"
 	VerificationMethodOAuth              = "oauth"
+	VerificationMethodWeChat             = "wechat"
 	VerificationMethodSession            = "session"
 	VerificationScopeChannelKeyRead      = "channel.key.read"
 	VerificationScopePasskeyRegister     = "passkey.register"
@@ -425,6 +426,23 @@ func GetVerificationRequirements(identity AuthIdentity, scope string) (*Verifica
 			}
 		}
 	}
+	// An account without a password, 2FA or Passkey proves its sign-in again.
+	// WeChat is not an OAuth provider and needs no browser popup, so a linked
+	// WeChat account does that with a fresh official-account code, also from
+	// an access-token session.
+	if slices.ContainsFunc(methods, func(option VerificationMethodOption) bool { return option.Method == VerificationMethodOAuth }) {
+		user, err := model.GetUserById(identity.UserID, false)
+		if err != nil {
+			return nil, err
+		}
+		if user.WeChatId != "" {
+			option := VerificationMethodOption{Method: VerificationMethodWeChat, Available: common.WeChatAuthEnabled}
+			if !option.Available {
+				option.Reason = ErrVerificationUnavailable.Error()
+			}
+			requirements.Methods = append(methods, option)
+		}
+	}
 	return requirements, nil
 }
 
@@ -607,6 +625,27 @@ func VerifySecurityInput(identity AuthIdentity, input VerificationInput) (*Secur
 		}
 		if err := VerifyTwoFactorCode(twoFA, input.Code); err != nil {
 			return nil, err
+		}
+	case VerificationMethodWeChat:
+		user, err := model.GetUserById(identity.UserID, false)
+		if err != nil {
+			return nil, err
+		}
+		// The code is claimed even when it belongs to another WeChat account,
+		// so a mismatched or replayed code never verifies twice.
+		weChatID, err := ClaimWeChatCode(input.Code)
+		if err != nil {
+			var message *common.Message
+			if !errors.As(err, &message) {
+				// Transport errors may include the request URL, which contains the
+				// one-time code. Provider errors may echo it too, so keep this log
+				// message fixed and never include the raw error.
+				common.SysError(common.LogText("WeChat security verification could not resolve the provider assertion"))
+			}
+			return nil, ErrVerificationFailed
+		}
+		if user.WeChatId == "" || weChatID != user.WeChatId {
+			return nil, ErrVerificationFailed
 		}
 	case VerificationMethodPasskey, VerificationMethodOAuth:
 		return nil, ErrVerificationFlowRequired

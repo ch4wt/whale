@@ -86,12 +86,13 @@ export type PendingSession = { server: string; sessionToken: string }
  * 登录的下一步：
  * - done：已登录
  * - loginCode：账号开了两步验证，登录本身要验证码
- * - stepUpCode：创建长期令牌要再验证一次 2FA（同一个验证码不能重复用）
+ * - stepUpCode：创建长期令牌要再验证一次。method 为 2fa 时输入新的两步验证码；
+ *   为 wechat 时（纯微信账号）在公众号再获取一个验证码。同一个验证码都不能重复用
  */
 export type LoginStep =
   | { kind: 'done'; auth: StoredAuth }
   | { kind: 'loginCode'; flowToken: string }
-  | { kind: 'stepUpCode'; pending: PendingSession }
+  | { kind: 'stepUpCode'; pending: PendingSession; method: StepUpMethod }
 
 /** 服务端开启 Turnstile 时，new-api 从查询参数 turnstile 读取 token */
 const withTurnstile = (path: string, turnstile?: string): string =>
@@ -136,8 +137,13 @@ export const submitLoginCode = async (
   return afterLogin(server, result, password)
 }
 
-export const submitStepUpCode = async (pending: PendingSession, code: string): Promise<StoredAuth> =>
-  createAccessToken(pending, { method: '2fa', code })
+export type StepUpMethod = '2fa' | 'wechat'
+
+export const submitStepUpCode = async (
+  pending: PendingSession,
+  method: StepUpMethod,
+  code: string
+): Promise<StoredAuth> => createAccessToken(pending, { method, code })
 
 const afterLogin = async (server: string, result: LoginResponse, password: string | null): Promise<LoginStep> => {
   if (result.require_verification) {
@@ -169,7 +175,11 @@ const exchangeSession = async (pending: PendingSession, password: string | null)
     return { kind: 'done', auth: await createAccessToken(pending, { method: 'password', ...passwordBody }) }
   }
   if (available.has('2fa')) {
-    return { kind: 'stepUpCode', pending }
+    return { kind: 'stepUpCode', pending, method: '2fa' }
+  }
+  // 纯微信账号（没有密码、2FA、Passkey）用新的公众号验证码授权
+  if (available.has('wechat')) {
+    return { kind: 'stepUpCode', pending, method: 'wechat' }
   }
   return { kind: 'done', auth: await keyOnlyAuth(pending) }
 }

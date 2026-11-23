@@ -2233,6 +2233,10 @@ select {
   font-size: 13px;
 }
 
+.pf-relogin {
+  margin: 12px 0 0;
+}
+
 .pf-balance-row {
   display: grid;
   grid-template-columns: 1.35fr 1fr;

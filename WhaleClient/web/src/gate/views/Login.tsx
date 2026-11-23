@@ -8,6 +8,7 @@ import {
   wechatLogin,
   type LoginStep,
   type ServerStatus,
+  type StepUpMethod,
   type StoredAuth,
 } from '../api/auth.js'
 import { ApiError } from '../api/http.js'
@@ -25,6 +26,17 @@ type CodeStep = Exclude<LoginStep, { kind: 'done' }>
 type Field = 'username' | 'password' | 'confirm' | 'email' | 'code'
 type FieldError = { field: Field; message: string }
 type Notice = { tone: 'info' | 'success'; text: string }
+
+/** 创建长期令牌前的再次验证：2FA 要等验证器刷新，微信要在公众号重新获取 */
+const STEP_UP_NOTICE: Record<StepUpMethod, string> = {
+  '2fa': '为了授权此设备，请等验证器刷新后输入新的验证码',
+  wechat: '为了授权此设备，请在公众号再回复一次「验证码」，输入新收到的验证码',
+}
+
+const STEP_UP_LABEL: Record<StepUpMethod, string> = {
+  '2fa': '授权此设备：两步验证码',
+  wechat: '授权此设备：微信验证码',
+}
 
 /** 能对应到某个输入框的后端错误（按 message_key），显示在该输入框下方 */
 const FIELD_BY_KEY: Record<string, Field> = {
@@ -95,9 +107,7 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
     }
     setStep(next)
     setCode('')
-    setNotice(
-      next.kind === 'stepUpCode' ? { tone: 'info', text: '为了授权此设备，请等验证器刷新后输入新的验证码' } : null
-    )
+    setNotice(next.kind === 'stepUpCode' ? { tone: 'info', text: STEP_UP_NOTICE[next.method] } : null)
     setBusy(false)
   }
 
@@ -127,7 +137,7 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
         return
       }
       if (step?.kind === 'stepUpCode') {
-        onDone(await submitStepUpCode(step.pending, code.trim()))
+        onDone(await submitStepUpCode(step.pending, step.method, code.trim()))
         return
       }
 
@@ -172,8 +182,9 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
       const field =
         e instanceof InputError ? e.field : e instanceof ApiError && e.key ? FIELD_BY_KEY[e.key] : undefined
       let message = (e as Error).message
-      if (field === 'code' && mode === 'wechat' && !step && e instanceof ApiError) {
-        message = `${message}，请在公众号重新回复「验证码」获取`
+      const weChatCode = (mode === 'wechat' && !step) || (step?.kind === 'stepUpCode' && step.method === 'wechat')
+      if (field === 'code' && weChatCode && e instanceof ApiError) {
+        message = '验证码错误或已过期，请在公众号重新回复「验证码」获取新的验证码'
       }
       if (field) setFieldError({ field, message })
       else setError(message)
@@ -181,7 +192,8 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
     }
   }
 
-  const title = step ? '两步验证' : mode === 'register' ? '注册' : mode === 'wechat' ? '微信登录' : '登录'
+  const stepTitle = step?.kind === 'stepUpCode' && step.method === 'wechat' ? '授权此设备' : '两步验证'
+  const title = step ? stepTitle : mode === 'register' ? '注册' : mode === 'wechat' ? '微信登录' : '登录'
 
   return (
     <div className="login">
@@ -217,7 +229,7 @@ export const Login = ({ onDone }: { onDone: (auth: StoredAuth) => void }) => {
 
         {step ? (
           <label className="field">
-            <span>{step.kind === 'stepUpCode' ? '授权此设备：两步验证码' : '两步验证码'}</span>
+            <span>{step.kind === 'stepUpCode' ? STEP_UP_LABEL[step.method] : '两步验证码'}</span>
             <input
               value={code}
               inputMode="numeric"

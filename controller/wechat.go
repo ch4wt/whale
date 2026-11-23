@@ -1,13 +1,9 @@
 package controller
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
@@ -19,50 +15,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type wechatLoginResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Data    string `json:"data"`
-}
-
-func getWeChatIdByCode(code string) (string, error) {
-	if code == "" {
-		return "", common.NewMessage("Invalid parameters")
-	}
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/api/wechat/user?code=%s", common.WeChatServerAddress, url.QueryEscape(code)), nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header.Set("Authorization", common.WeChatServerToken)
-	client := http.Client{
-		Timeout: 5 * time.Second,
-	}
-	httpResponse, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer httpResponse.Body.Close()
-	var res wechatLoginResponse
-	err = common.DecodeJson(httpResponse.Body, &res)
-	if err != nil {
-		return "", err
-	}
-	if !res.Success {
-		return "", errors.New(res.Message)
-	}
-	if res.Data == "" {
-		return "", common.NewMessage("Verification code is incorrect or has expired")
-	}
-	return res.Data, nil
-}
-
 func WeChatAuth(c *gin.Context) {
 	if !common.WeChatAuthEnabled {
 		common.ApiErrorT(c, "{{provider}} login and registration has not been enabled by administrator", providerParams("WeChat"))
 		return
 	}
 	code := c.Query("code")
-	wechatId, err := getWeChatIdByCode(code)
+	wechatId, err := service.ClaimWeChatCode(code)
 	if err != nil {
 		common.ApiError(c, err)
 		return
@@ -136,7 +95,7 @@ func WeChatBind(c *gin.Context) {
 	if middleware.RequireSecurityProof(c, service.VerificationOperation{Scope: service.VerificationScopeAccountBind, Context: context}) == nil {
 		return
 	}
-	wechatId, err := getWeChatIdByCode(code)
+	wechatId, err := service.ClaimWeChatCode(code)
 	if err != nil {
 		common.ApiError(c, err)
 		return

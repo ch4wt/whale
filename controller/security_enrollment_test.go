@@ -212,7 +212,7 @@ func TestSecurityEnrollmentAccessTokenMethodPolicy(t *testing.T) {
 		{name: "disabled passkey blocks fallback", method: "passkey", password: true, passkey: true, disabledPasskey: true},
 		{name: "disabled passkey does not block password", method: "password", password: true, disabledPasskey: true, available: true},
 		{name: "linked oauth", method: "oauth", oauth: true, available: true},
-		{name: "wechat session cannot manage tokens", method: "oauth", wechat: true},
+		{name: "wechat account verifies with a wechat code", method: "oauth", wechat: true},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			user, identity := setupSecurityEnrollmentTest(t)
@@ -237,6 +237,9 @@ func TestSecurityEnrollmentAccessTokenMethodPolicy(t *testing.T) {
 			}
 			if test.wechat {
 				require.NoError(t, model.DB.Model(user).Update("wechat_id", "wechat-user").Error)
+				previousEnabled := common.WeChatAuthEnabled
+				common.WeChatAuthEnabled = true
+				t.Cleanup(func() { common.WeChatAuthEnabled = previousEnabled })
 			}
 			system_setting.GetPasskeySettings().Enabled = !test.disabledPasskey
 			passwordScope := service.VerificationScopePasswordChange
@@ -248,14 +251,17 @@ func TestSecurityEnrollmentAccessTokenMethodPolicy(t *testing.T) {
 				requirements, err := service.GetVerificationRequirements(identity, scope)
 				require.NoError(t, err)
 				count := 1
-				if test.twoFA && test.passkey {
+				if (test.twoFA && test.passkey) || test.wechat {
 					count = 2
 				}
 				require.Len(t, requirements.Methods, count)
 				assert.Equal(t, test.method, requirements.Methods[0].Method)
 				assert.Equal(t, test.available, requirements.Methods[0].Available)
-				if count == 2 {
+				if test.twoFA && test.passkey {
 					assert.Equal(t, service.VerificationMethodOption{Method: "passkey", Available: true}, requirements.Methods[1])
+				}
+				if test.wechat {
+					assert.Equal(t, service.VerificationMethodOption{Method: service.VerificationMethodWeChat, Available: true}, requirements.Methods[1])
 				}
 				if test.wechat {
 					input := service.VerificationInput{Scope: scope, Method: "session"}
