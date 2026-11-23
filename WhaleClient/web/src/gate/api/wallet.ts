@@ -3,7 +3,7 @@
  * 支付完成后易支付会跳回 new-api 主站，客户端靠轮询订单状态得知到账。
  */
 import type { StoredAuth } from './auth.js'
-import { ApiError, request, requestRaw } from './http.js'
+import { ApiError, request, requestRaw, responseError, type ApiEnvelope } from './http.js'
 
 export type PayMethod = { name: string; type: string; min_topup?: string }
 
@@ -33,7 +33,7 @@ export const fetchTopupInfo = (auth: StoredAuth): Promise<TopupInfo> =>
 export const epayMethods = (info: TopupInfo): PayMethod[] =>
   info.enable_online_topup ? (info.pay_methods ?? []).filter((method) => !NON_EPAY_TYPES.has(method.type)) : []
 
-type PaymentBody = { success?: boolean; message?: string; data?: unknown; url?: string }
+type PaymentBody = ApiEnvelope<unknown> & { url?: string }
 
 /**
  * 支付接口的响应是 {message: "success" | "error", data, url}，没有 success 字段，
@@ -57,11 +57,10 @@ const paymentRequest = async (auth: StoredAuth, path: string, json: unknown): Pr
   try {
     body = (await response.json()) as PaymentBody
   } catch {
-    throw new ApiError(`HTTP ${response.status}`, response.status)
+    throw responseError(response, null)
   }
   if (!response.ok || body?.success === false || body?.message !== 'success') {
-    const detail = typeof body?.data === 'string' && body.data ? body.data : body?.message
-    throw new ApiError(detail || `HTTP ${response.status}`, response.status)
+    throw responseError(response, body)
   }
   return body
 }
