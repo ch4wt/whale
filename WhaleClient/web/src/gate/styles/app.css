@@ -1965,7 +1965,8 @@ select {
 }
 
 .usage-dialog-error,
-.usage-dialog-notice {
+.usage-dialog-notice,
+.usage-dialog-info {
   padding: 9px 12px;
   border: 1px solid transparent;
   border-radius: 10px;
@@ -1983,6 +1984,20 @@ select {
   border-color: rgba(79, 191, 127, 0.35);
   background: rgba(79, 191, 127, 0.1);
   color: #6fd39a;
+}
+
+.usage-dialog-info {
+  border-color: rgba(65, 118, 230, 0.35);
+  background: rgba(65, 118, 230, 0.1);
+  color: #8fa9f3;
+}
+
+.usage-dialog-trade {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  user-select: all;
+  word-break: break-all;
 }
 
 .usage-dialog-pay:disabled {

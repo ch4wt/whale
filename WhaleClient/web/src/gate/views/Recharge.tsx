@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { hasScope, type StoredAuth } from '../api/auth.js'
 import {
+  type TopUpStatus,
   createEpayOrder,
   epayMethods,
   fetchTopUpStatus,
@@ -51,6 +52,9 @@ export const Recharge = ({ auth, unit, onClose, onPaid }: Props) => {
   const [notice, setNotice] = useState('')
   /** 已下单、等待支付结果的订单号 */
   const [waitingTradeNo, setWaitingTradeNo] = useState('')
+  /** 手动点「我已完成支付」后的查询状态与提示 */
+  const [checking, setChecking] = useState(false)
+  const [pendingHint, setPendingHint] = useState('')
 
   useEffect(() => {
     if (!canPay) return
@@ -100,15 +104,35 @@ export const Recharge = ({ auth, unit, onClose, onPaid }: Props) => {
     }
   }, [auth, amount, amountValid, canPay, methods.length])
 
-  const checkOrder = async (tradeNo: string): Promise<void> => {
+  /** 订单有结果时结束等待；仍在处理中返回 pending，查不到返回 null */
+  const checkOrder = async (tradeNo: string): Promise<TopUpStatus | null> => {
     const status = await fetchTopUpStatus(auth, tradeNo)
     if (status === 'success') {
       setWaitingTradeNo('')
+      setPendingHint('')
       setNotice('充值成功，余额已更新')
       onPaid()
     } else if (status === 'failed' || status === 'expired') {
       setWaitingTradeNo('')
+      setPendingHint('')
       setError(status === 'expired' ? '订单已过期，请重新下单' : '支付失败，请重新下单')
+    }
+    return status
+  }
+
+  const confirmPaid = async () => {
+    setChecking(true)
+    setError('')
+    setPendingHint('')
+    try {
+      const status = await checkOrder(waitingTradeNo)
+      if (status === 'pending' || status === null) {
+        setPendingHint('还没有收到支付结果。付款成功后一般几秒到一分钟内到账，请稍后再点一次；长时间未到账请把订单号发给管理员。')
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setChecking(false)
     }
   }
 
@@ -215,11 +239,21 @@ export const Recharge = ({ auth, unit, onClose, onPaid }: Props) => {
           <button
             type="button"
             className="usage-dialog-pay"
-            onClick={() => checkOrder(waitingTradeNo).catch((e: Error) => setError(e.message))}
+            disabled={checking}
+            onClick={confirmPaid}
           >
-            我已完成支付
+            {checking ? '正在查询支付结果…' : '我已完成支付'}
           </button>
-          <button type="button" className="usage-dialog-link" onClick={() => setWaitingTradeNo('')}>
+          {pendingHint ? <div className="usage-dialog-info">{pendingHint}</div> : null}
+          <div className="usage-dialog-trade">订单号：{waitingTradeNo}</div>
+          <button
+            type="button"
+            className="usage-dialog-link"
+            onClick={() => {
+              setWaitingTradeNo('')
+              setPendingHint('')
+            }}
+          >
             重新选择金额
           </button>
         </>
