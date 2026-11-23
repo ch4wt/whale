@@ -906,3 +906,74 @@ func TestSecurityAccountUnbindPreservesUsableLoginMethod(t *testing.T) {
 		})
 	}
 }
+
+// A WeChat-only account has no password, 2FA or Passkey; it proves its sign-in
+// again with a fresh official-account code that must belong to its own WeChat
+// account and can be used once, including across sign-in and verification.
+func TestSecurityAccountWeChatStepUp(t *testing.T) {
+	codes := map[string]string{"linked-code": "wx-linked", "other-code": "wx-other"}
+	weChatServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "wechat-server-token" {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		body, err := common.Marshal(map[string]any{"success": true, "data": codes[r.URL.Query().Get("code")]})
+		require.NoError(t, err)
+		_, _ = w.Write(body)
+	}))
+	t.Cleanup(weChatServer.Close)
+	operation := service.VerificationOperation{Scope: service.VerificationScopeAccountDelete}
+
+	for _, scenario := range []string{"linked code", "other account code", "unknown code", "replayed code", "code used to sign in", "wechat disabled", "account with password"} {
+		t.Run(scenario, func(t *testing.T) {
+			user, identity := setupSecurityEnrollmentTest(t)
+			previousAddress, previousToken, previousEnabled := common.WeChatServerAddress, common.WeChatServerToken, common.WeChatAuthEnabled
+			common.WeChatServerAddress, common.WeChatServerToken, common.WeChatAuthEnabled = weChatServer.URL, "wechat-server-token", true
+			t.Cleanup(func() {
+				common.WeChatServerAddress, common.WeChatServerToken, common.WeChatAuthEnabled = previousAddress, previousToken, previousEnabled
+			})
+			updates := map[string]any{"password": "", "wechat_id": "wx-linked"}
+			if scenario == "account with password" {
+				delete(updates, "password")
+			}
+			require.NoError(t, model.DB.Model(user).Updates(updates).Error)
+			if scenario == "wechat disabled" {
+				common.WeChatAuthEnabled = false
+			}
+			input := service.VerificationInput{Scope: operation.Scope, Method: service.VerificationMethodWeChat, Code: "linked-code"}
+			switch scenario {
+			case "other account code":
+				input.Code = "other-code"
+			case "unknown code":
+				input.Code = "expired-code"
+			case "replayed code":
+				_, err := service.VerifySecurityInput(identity, input)
+				require.NoError(t, err)
+			case "code used to sign in":
+				weChatID, err := service.ClaimWeChatCode("linked-code")
+				require.NoError(t, err)
+				require.Equal(t, "wx-linked", weChatID)
+			}
+
+			proof, err := service.VerifySecurityInput(identity, input)
+
+			switch scenario {
+			case "linked code":
+				require.NoError(t, err)
+				assert.Equal(t, service.VerificationMethodWeChat, proof.Method)
+				_, err = service.ConsumeOperationProof(proof.ProofToken, identity, operation)
+				assert.NoError(t, err)
+			case "wechat disabled":
+				assert.ErrorIs(t, err, service.ErrVerificationUnavailable)
+				requirements, requirementsErr := service.GetVerificationRequirements(identity, operation.Scope)
+				require.NoError(t, requirementsErr)
+				assert.Contains(t, requirements.Methods, service.VerificationMethodOption{Method: service.VerificationMethodWeChat, Reason: service.ErrVerificationUnavailable.Error()})
+			case "account with password":
+				assert.ErrorIs(t, err, service.ErrProofMethod)
+			default:
+				assert.ErrorIs(t, err, service.ErrVerificationFailed)
+				assert.Nil(t, proof)
+			}
+		})
+	}
+}

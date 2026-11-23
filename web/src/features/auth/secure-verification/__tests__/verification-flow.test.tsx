@@ -569,3 +569,59 @@ it('verifies with the clicked provider when several linked accounts are availabl
     screen.getByRole('button', { name: 'Continue with Linux DO' })
   ).toBeDisabled()
 })
+
+it('verifies a WeChat-only account with a fresh official-account code', async () => {
+  const proof: SecurityProof = {
+    proof_token: 'wechat-proof',
+    method: 'wechat',
+    scope: 'account.password.set',
+    expires_at: Math.floor(Date.now() / 1000) + 300,
+  }
+  vi.spyOn(api, 'get').mockImplementation((url) =>
+    url === '/api/verify/methods'
+      ? Promise.resolve({
+          data: {
+            success: true,
+            data: {
+              scope: 'account.password.set',
+              methods: [
+                {
+                  method: 'oauth',
+                  available: false,
+                  reason: 'No linked OAuth provider is available.',
+                },
+                { method: 'wechat', available: true },
+              ],
+              oauth_providers: [],
+              password_encryption_enabled: false,
+            },
+          },
+        })
+      : Promise.resolve({ data: { success: true, data: {} } })
+  )
+  const post = vi
+    .spyOn(api, 'post')
+    .mockResolvedValue({ data: { success: true, data: proof } })
+  const result = vi.fn()
+  const user = userEvent.setup()
+  render(
+    <Harness operation={{ scope: 'account.password.set' }} onResult={result} />
+  )
+  await user.click(screen.getByText('Protected action'))
+
+  const code = await screen.findByLabelText('Verification code')
+  expect(screen.getByRole('tab', { name: 'WeChat' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  )
+  expect(screen.getByRole('button', { name: 'Verify' })).toBeDisabled()
+  await user.type(code, ' 654321 ')
+  await user.click(screen.getByRole('button', { name: 'Verify' }))
+
+  await waitFor(() => expect(result).toHaveBeenCalledExactlyOnceWith(proof))
+  expect(post).toHaveBeenCalledExactlyOnceWith(
+    '/api/verify',
+    { method: 'wechat', scope: 'account.password.set', code: '654321' },
+    expect.anything()
+  )
+})

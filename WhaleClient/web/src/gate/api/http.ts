@@ -1,15 +1,37 @@
 /** 统一的 HTTP 封装：处理 new-api 的 {success, message, data} 包装 */
+import { rateLimitMessage, translateServerMessage } from './messages.js'
 
-export type ApiEnvelope<T> = { success: boolean; message?: string; data?: T }
+export type ApiEnvelope<T> = {
+  success?: boolean
+  message?: string
+  data?: T
+  /** 后端错误的英文原文 key，用来翻译和判断是哪类错误 */
+  message_key?: string
+  message_params?: Record<string, unknown>
+}
 
 export class ApiError extends Error {
   constructor(
     message: string,
-    readonly status?: number
+    readonly status?: number,
+    /** 后端的 message_key，界面据此把错误放到对应输入框下 */
+    readonly key?: string
   ) {
     super(message)
     this.name = 'ApiError'
   }
+}
+
+/**
+ * 把失败响应转成中文 ApiError。
+ * 支付接口的失败是 {message: "error", data: 原文}，其他接口是 {success: false, message: 原文}。
+ */
+export const responseError = (response: Response, body: ApiEnvelope<unknown> | null): ApiError => {
+  if (response.status === 429) return new ApiError(rateLimitMessage(response.headers.get('Retry-After')), 429)
+  const original = body?.message === 'error' && typeof body.data === 'string' ? body.data : body?.message
+  const message =
+    translateServerMessage(body?.message_key, body?.message_params) || original || `HTTP ${response.status}`
+  return new ApiError(message, response.status, body?.message_key)
 }
 
 export const normalizeServer = (input: string): string => {
@@ -46,6 +68,7 @@ export const request = async <T>(
   try {
     body = text ? (JSON.parse(text) as ApiEnvelope<T>) : null
   } catch {
+    if (response.status === 429) throw responseError(response, null)
     throw new ApiError(text.slice(0, 200) || `HTTP ${response.status}`, response.status)
   }
 

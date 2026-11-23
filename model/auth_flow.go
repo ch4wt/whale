@@ -24,6 +24,7 @@ const (
 	AuthFlowPurposePasskeyStepUp     = "passkey_step_up"
 	AuthFlowPurposeTelegramBind      = "telegram_bind"
 	AuthFlowPurposeTelegramAssertion = "telegram_assertion"
+	AuthFlowPurposeWeChatCode        = "wechat_code"
 	AuthFlowIntentLogin              = "login"
 	AuthFlowIntentBind               = "bind"
 	AuthFlowIntentVerify             = "verify"

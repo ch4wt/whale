@@ -226,6 +226,7 @@ export async function verify(
         )
         break
       case '2fa':
+      case 'wechat':
         proof = await authResult<SecurityProof>(
           api.post(
             '/api/verify',

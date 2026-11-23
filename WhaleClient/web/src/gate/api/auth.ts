@@ -24,7 +24,12 @@ export type StoredAuth = {
   user?: { id?: number; username?: string; display_name?: string; quota?: number }
   /** 没有长期令牌，只缓存了 API Key（见 keyOnlyAuth）：能聊天，不能调管理接口 */
   keyOnly?: boolean
+  /** PAT 的权限；旧版本登录保存的凭证没有这个字段 */
+  scopes?: string[]
 }
+
+/** 旧凭证不记录 scopes，一律视为没有，需要重新登录换新 PAT */
+export const hasScope = (auth: StoredAuth, scope: string): boolean => Boolean(auth.scopes?.includes(scope))
 
 const STORAGE_KEY = 'whaleclient:auth'
 
@@ -81,17 +86,27 @@ export type PendingSession = { server: string; sessionToken: string }
  * 登录的下一步：
  * - done：已登录
  * - loginCode：账号开了两步验证，登录本身要验证码
- * - stepUpCode：创建长期令牌要再验证一次 2FA（同一个验证码不能重复用）
+ * - stepUpCode：创建长期令牌要再验证一次。method 为 2fa 时输入新的两步验证码；
+ *   为 wechat 时（纯微信账号）在公众号再获取一个验证码。同一个验证码都不能重复用
  */
 export type LoginStep =
   | { kind: 'done'; auth: StoredAuth }
   | { kind: 'loginCode'; flowToken: string }
-  | { kind: 'stepUpCode'; pending: PendingSession }
+  | { kind: 'stepUpCode'; pending: PendingSession; method: StepUpMethod }
 
-export const login = async (rawServer: string, username: string, password: string): Promise<LoginStep> => {
+/** 服务端开启 Turnstile 时，new-api 从查询参数 turnstile 读取 token */
+const withTurnstile = (path: string, turnstile?: string): string =>
+  turnstile ? `${path}?turnstile=${encodeURIComponent(turnstile)}` : path
+
+export const login = async (
+  rawServer: string,
+  username: string,
+  password: string,
+  turnstile?: string
+): Promise<LoginStep> => {
   const server = normalizeServer(rawServer)
   const passwordBody = await encryptPassword(server, password)
-  const result = await request<LoginResponse>(server, '/api/user/login', {
+  const result = await request<LoginResponse>(server, withTurnstile('/api/user/login', turnstile), {
     method: 'POST',
     json: { username, ...passwordBody },
   })
@@ -122,8 +137,13 @@ export const submitLoginCode = async (
   return afterLogin(server, result, password)
 }
 
-export const submitStepUpCode = async (pending: PendingSession, code: string): Promise<StoredAuth> =>
-  createAccessToken(pending, { method: '2fa', code })
+export type StepUpMethod = '2fa' | 'wechat'
+
+export const submitStepUpCode = async (
+  pending: PendingSession,
+  method: StepUpMethod,
+  code: string
+): Promise<StoredAuth> => createAccessToken(pending, { method, code })
 
 const afterLogin = async (server: string, result: LoginResponse, password: string | null): Promise<LoginStep> => {
   if (result.require_verification) {
@@ -155,7 +175,11 @@ const exchangeSession = async (pending: PendingSession, password: string | null)
     return { kind: 'done', auth: await createAccessToken(pending, { method: 'password', ...passwordBody }) }
   }
   if (available.has('2fa')) {
-    return { kind: 'stepUpCode', pending }
+    return { kind: 'stepUpCode', pending, method: '2fa' }
+  }
+  // 纯微信账号（没有密码、2FA、Passkey）用新的公众号验证码授权
+  if (available.has('wechat')) {
+    return { kind: 'stepUpCode', pending, method: 'wechat' }
   }
   return { kind: 'done', auth: await keyOnlyAuth(pending) }
 }
@@ -182,7 +206,7 @@ const createAccessToken = async (pending: PendingSession, verification: Record<s
 
   await endSession(pending)
   forgetApiKey()
-  const auth: StoredAuth = { server, token: created.token, expiresAt }
+  const auth: StoredAuth = { server, token: created.token, expiresAt, scopes }
   saveAuth(auth)
   return auth
 }
@@ -218,6 +242,7 @@ export type ServerStatus = {
   password_register_enabled?: boolean
   email_verification?: boolean
   turnstile_check?: boolean
+  turnstile_site_key?: string
   wechat_login?: boolean
   wechat_qrcode?: string
 }
@@ -227,12 +252,19 @@ export const fetchStatus = async (rawServer: string): Promise<ServerStatus> => {
   return request<ServerStatus>(server, '/api/status', { method: 'GET' })
 }
 
-export type RegisterInput = { username: string; password: string; email?: string; code?: string; affCode?: string }
+export type RegisterInput = {
+  username: string
+  password: string
+  email?: string
+  code?: string
+  affCode?: string
+  turnstile?: string
+}
 
 /** 注册后不会自动登录，服务端只返回成功 */
 export const registerAccount = async (rawServer: string, input: RegisterInput): Promise<void> => {
   const server = normalizeServer(rawServer)
-  await request(server, '/api/user/register', {
+  await request(server, withTurnstile('/api/user/register', input.turnstile), {
     method: 'POST',
     json: {
       username: input.username,

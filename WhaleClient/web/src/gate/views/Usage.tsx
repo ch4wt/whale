@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { fetchSelf, loadAuth } from '../api/auth.js'
 import { request } from '../api/http.js'
+import { signOut } from '../session.js'
+import { Recharge } from './Recharge.js'
 
 type Self = { username?: string; quota?: number; used_quota?: number; request_count?: number }
 type LogRow = {
@@ -10,7 +12,7 @@ type LogRow = {
   completion_tokens?: number
   quota?: number
 }
-type Status = { quota_per_unit?: number; usd_exchange_rate?: number }
+type Status = { quota_per_unit?: number; usd_exchange_rate?: number; quota_display_type?: string }
 type LogPage = { items?: LogRow[]; total?: number }
 type QuotaRow = { created_at: number; quota?: number; token_used?: number; model_name?: string }
 
@@ -314,7 +316,7 @@ export const Usage = () => {
   useEffect(() => {
     if (!auth) return
     if (auth.keyOnly) {
-      setError('当前账号是微信登录且未设置密码或两步验证，无法查看用量。请在网页控制台设置密码后，用账号密码重新登录。')
+      setError('本设备还没有完成授权，暂时无法查看用量。请点下方「重新登录」，微信登录时按提示在公众号再获取一次验证码即可完成授权。')
       return
     }
     let alive = true
@@ -405,6 +407,11 @@ export const Usage = () => {
         <div className="pf-note">所有日期均按 GMT+8 时间显示，数据可能有 5 分钟延迟</div>
 
         {error ? <div className="pf-error">{error}</div> : null}
+        {auth.keyOnly ? (
+          <button type="button" className="pf-topup pf-relogin" onClick={signOut}>
+            重新登录
+          </button>
+        ) : null}
 
         <div className="pf-balance-row">
           <div className="pf-balance">

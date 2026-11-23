@@ -24,6 +24,7 @@ export type VerificationMethod =
   | 'password'
   | 'oauth'
   | 'session'
+  | 'wechat'
 export type SecurityProofScope =
   | 'channel.key.read'
   | 'passkey.register'
@@ -122,6 +123,7 @@ export type VerificationInput =
   | { method: 'passkey'; rpID?: string }
   | { method: 'oauth'; provider: string }
   | { method: 'session' }
+  | { method: 'wechat'; code: string }
 
 export type RequestVerificationOptions = VerificationOperation & {
   title?: string

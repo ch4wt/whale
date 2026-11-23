@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useStatus } from '@/hooks/use-status'
 
 import type { PasskeyDomains } from '../../passkey/assertion'
 import { PasskeyDomainSelector } from '../../passkey/components/passkey-domain-selector'
@@ -49,6 +50,7 @@ const methodLabels: Record<VerificationMethod, string> = {
   password: 'Password',
   oauth: 'Linked account',
   session: 'Login session',
+  wechat: 'WeChat',
 }
 
 export function SecureVerificationDialog(props: SecureVerificationDialogProps) {
@@ -70,6 +72,9 @@ export function SecureVerificationDialog(props: SecureVerificationDialogProps) {
   if (input?.method === '2fa') {
     canVerify = canVerify && input.code.trim().length >= 6
   }
+  if (input?.method === 'wechat') {
+    canVerify = canVerify && input.code.trim().length > 0
+  }
   // Linked-account verification starts from the provider button itself.
   const showSubmit = state.phase !== 'error' && input?.method !== 'oauth'
   const error = 'error' in state ? state.error : undefined
@@ -78,6 +83,7 @@ export function SecureVerificationDialog(props: SecureVerificationDialogProps) {
   const selectMethod = (method: string) => {
     switch (method) {
       case '2fa':
+      case 'wechat':
         props.onInputChange({ method, code: '' })
         break
       case 'password':
@@ -226,6 +232,30 @@ export function SecureVerificationDialog(props: SecureVerificationDialogProps) {
                     : t('Enter the 6-digit authenticator code.')}
                 </p>
               </TabsContent>
+              <TabsContent value='wechat' className='space-y-3'>
+                <p className='text-muted-foreground text-sm'>
+                  {t(
+                    'Scan the QR code to follow the official account and reply with “验证码” to receive your verification code.'
+                  )}
+                </p>
+                <WeChatQrCode />
+                <Label htmlFor={`${inputId}-wechat`}>
+                  {t('Verification code')}
+                </Label>
+                <Input
+                  id={`${inputId}-wechat`}
+                  autoComplete='one-time-code'
+                  autoFocus
+                  disabled={verifying}
+                  value={input.method === 'wechat' ? input.code : ''}
+                  onChange={(event) =>
+                    props.onInputChange({
+                      method: 'wechat',
+                      code: event.target.value,
+                    })
+                  }
+                />
+              </TabsContent>
               <TabsContent value='passkey' className='space-y-3'>
                 <PasskeyDomainSelector
                   domains={props.passkeyDomains}
@@ -276,5 +306,24 @@ export function SecureVerificationDialog(props: SecureVerificationDialogProps) {
         </form>
       )}
     </Dialog>
+  )
+}
+
+/**
+ * WeChat verification codes come from the same official account as sign-in.
+ * Rendered inside the WeChat tab so the status request runs only when needed.
+ */
+function WeChatQrCode() {
+  const { t } = useTranslation()
+  const url = useStatus().status?.wechat_qrcode
+  if (!url) return null
+  return (
+    <div className='flex justify-center'>
+      <img
+        src={url}
+        alt={t('WeChat login QR code')}
+        className='h-40 w-40 rounded-md border object-contain'
+      />
+    </div>
   )
 }

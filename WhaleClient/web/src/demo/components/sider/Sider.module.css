@@ -432,7 +432,7 @@
 }
 
 .accountMore:hover {
-  background: var(--dsw-alias-bg-hover, rgba(255, 255, 255, 0.08));
+  background: var(--dsw-alias-interactive-bg-hover);
 }
 
 .menu {
@@ -444,10 +444,10 @@
   flex-direction: column;
   width: 210px;
   padding: 6px;
-  border: 1px solid var(--dsw-alias-border-secondary);
+  border: 1px solid var(--dsw-alias-border-l2);
   border-radius: 12px;
-  background: var(--dsw-alias-bg-primary, #232630);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.35);
+  background: var(--dsw-specific-menu);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
 }
 
 .menuItem {
@@ -467,7 +467,7 @@
 }
 
 .menuItem:hover {
-  background: var(--dsw-alias-bg-hover, rgba(255, 255, 255, 0.08));
+  background: var(--dsw-alias-interactive-bg-hover);
 }
 
 .menuArrow {
