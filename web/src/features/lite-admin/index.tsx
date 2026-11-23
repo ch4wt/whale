@@ -180,16 +180,16 @@ export function LiteAdmin() {
                   hint={platform?.base_url || ''}
                 />
                 <StatCard
-                  label='平台充值金额'
+                  label='累计充值金额'
                   value={money(platform?.upstream_topped_up ?? 0)}
-                  hint='官方账户实充'
+                  hint='只在余额上涨时增加'
                 />
                 <StatCard
-                  label='平台消耗金额'
+                  label='累计消耗金额'
                   value={money(platform?.upstream_used ?? 0)}
                 />
                 <StatCard
-                  label='平台可用余额'
+                  label='平台当前余额'
                   value={money(platform?.upstream_balance ?? 0)}
                 />
               </div>

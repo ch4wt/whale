@@ -271,10 +271,14 @@ func GetPlatformOverview(c *gin.Context) {
 		v, _ := strconv.ParseFloat(s, 64)
 		return v
 	}
-	upToppedUp := f(info.ToppedUpBalance)
-	upGranted := f(info.GrantedBalance)
 	upBalance := f(info.TotalBalance)
-	upUsed := math.Round((upToppedUp+upGranted-upBalance)*100) / 100
+	// 累计口径：充值只在余额上涨时增加，消耗按余额下降累计
+	stat, statErr := model.RecordPlatformBalance(upBalance)
+	upToppedUp, upUsed := upBalance, 0.0
+	if statErr == nil && stat != nil {
+		upToppedUp = stat.CumTopUp
+		upUsed = stat.CumUsed
+	}
 
 	// 站内用户汇总
 	type row struct {
@@ -336,6 +340,7 @@ func GetPlatformOverview(c *gin.Context) {
 		"key_masked":     keyMasked,
 		"base_url":       baseURL,
 		"upstream_topped_up": math.Round(upToppedUp*100) / 100,
+		"upstream_snapshot_at": time.Now().Unix(),
 		"upstream_balance":   math.Round(upBalance*100) / 100,
 		"upstream_used":      upUsed,
 		"user_paid":      math.Round(userPaid*100) / 100,
