@@ -276,8 +276,8 @@ func GetPlatformOverview(c *gin.Context) {
 	stat, statErr := model.RecordPlatformBalance(upBalance)
 	upToppedUp, upUsed := upBalance, 0.0
 	if statErr == nil && stat != nil {
-		upToppedUp = stat.CumTopUp
-		upUsed = stat.CumUsed
+		upUsed = math.Round(stat.CumUsed*100) / 100
+		upToppedUp = math.Round((upBalance+upUsed)*100) / 100
 	}
 
 	// 站内用户汇总
@@ -302,7 +302,9 @@ func GetPlatformOverview(c *gin.Context) {
 	}
 
 	userPaid, userUsed, userBalance, userTotal := 0.0, 0.0, 0.0, 0.0
+	allUsedQuota := 0
 	for _, r := range rows {
+		allUsedQuota += r.UsedQuota
 		if r.Role >= 100 {
 			continue // 管理员额度不计入用户汇总
 		}
@@ -310,6 +312,14 @@ func GetPlatformOverview(c *gin.Context) {
 		userBalance += toCNY(float64(r.Quota))
 		userTotal += toCNY(float64(r.Quota + r.UsedQuota))
 	}
+
+	// 平台消耗 = 全部用户已消耗额度 ÷ 倍率（倍率是官方成本的加成）
+	ratio := ratio_setting.GetGroupRatio("default")
+	if ratio <= 0 {
+		ratio = 1
+	}
+	upUsed = math.Round(toCNY(float64(allUsedQuota))/ratio*100) / 100
+	upToppedUp = math.Round((upBalance+upUsed)*100) / 100
 
 	// 用户实付：按用户分组累加（排除管理员需查 role）
 	if paidTotal > 0 {

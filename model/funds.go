@@ -41,8 +41,6 @@ func RecordPlatformBalance(balance float64) (*PlatformStat, error) {
 	delta := balance - stat.LastBalance
 	if delta > 0 {
 		stat.CumTopUp += delta
-	} else if delta < 0 {
-		stat.CumUsed += -delta
 	}
 	stat.LastBalance = balance
 	DB.Model(&stat).Updates(map[string]any{
@@ -51,4 +49,22 @@ func RecordPlatformBalance(balance float64) (*PlatformStat, error) {
 		"cum_used":     stat.CumUsed,
 	})
 	return &stat, nil
+}
+
+// AddPlatformCost 记录一笔平台成本（人民币），用于精确统计累计消耗
+func AddPlatformCost(costCNY float64) error {
+	if costCNY <= 0 {
+		return nil
+	}
+	if err := DB.AutoMigrate(&PlatformStat{}); err != nil {
+		return err
+	}
+	stat := PlatformStat{Id: 1}
+	if err := DB.First(&stat, 1).Error; err != nil {
+		stat = PlatformStat{Id: 1}
+		if err := DB.Create(&stat).Error; err != nil {
+			return err
+		}
+	}
+	return DB.Model(&stat).Update("cum_used", stat.CumUsed+costCNY).Error
 }
