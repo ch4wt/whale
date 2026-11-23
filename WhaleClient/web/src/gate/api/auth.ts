@@ -5,7 +5,7 @@
 import { ensureApiKey, forgetApiKey } from './chat.js'
 import { ApiError, normalizeServer, request } from './http.js'
 
-/** usage:read、wallet:read 给用量与余额页用；wallet:write 给充值（易支付下单、兑换码）用 */
+/** usage:read、wallet:read 给用量与余额页用 */
 export const PAT_SCOPES = [
   'api_key:read',
   'api_key:reveal',
@@ -13,7 +13,7 @@ export const PAT_SCOPES = [
   'profile:read',
   'usage:read',
   'wallet:read',
-  'wallet:write',
+  'account_security:write',
 ]
 const PAT_LIFETIME_SECONDS = 90 * 24 * 3600
 
@@ -274,4 +274,71 @@ export const registerAccount = async (rawServer: string, input: RegisterInput): 
       ...(input.affCode ? { aff_code: input.affCode } : {}),
     },
   })
+}
+
+
+/** 修改用户名 */
+export const updateUsername = async (auth: StoredAuth, username: string): Promise<void> => {
+  await request(auth.server, '/api/user/self', {
+    method: 'PUT',
+    bearer: auth.token,
+    json: { username },
+  })
+}
+
+/** 修改密码：先用当前密码拿安全凭证，再提交新密码 */
+export const changePassword = async (
+  auth: StoredAuth,
+  currentPassword: string,
+  newPassword: string
+): Promise<void> => {
+  const proof = await request<{ proof_token?: string }>(auth.server, '/api/verify', {
+    method: 'POST',
+    bearer: auth.token,
+    json: {
+      method: 'password',
+      scope: 'account.password.change',
+      context: {},
+      password: currentPassword,
+    },
+  })
+  const token = proof?.proof_token
+  if (!token) throw new Error('验证失败')
+  await request(auth.server, '/api/user/self', {
+    method: 'PUT',
+    bearer: auth.token,
+    json: { password: newPassword },
+    headers: { 'X-Security-Proof': token },
+  })
+}
+
+/** 上传头像到服务端，返回头像路径 */
+export const uploadAvatar = async (auth: StoredAuth, file: File): Promise<string> => {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(auth.server + '/api/user/avatar', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${auth.token}` },
+    body: form,
+  })
+  const body = await res.json().catch(() => ({}))
+  if (!res.ok || body?.success === false) {
+    throw new Error(body?.message || `HTTP ${res.status}`)
+  }
+  return body?.data?.avatar as string
+}
+
+/** 本地头像缓存（服务端路径或 dataURL） */
+const AVATAR_KEY = 'whaleclient:avatar'
+
+export const readAvatar = (): string | null => {
+  try {
+    return localStorage.getItem(AVATAR_KEY)
+  } catch {
+    return null
+  }
+}
+
+export const saveAvatar = (dataUrl: string): void => {
+  localStorage.setItem(AVATAR_KEY, dataUrl)
 }
