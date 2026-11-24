@@ -35,7 +35,7 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
         const remote = (value as { avatar?: string } | null)?.avatar
         if (remote) {
           saveAvatar(remote)
-          setAvatar(remote)
+          setAvatar(readAvatar())
         }
       })
       .catch(() => undefined)
@@ -85,7 +85,7 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
     try {
       const url = await uploadAvatar(auth, file)
       saveAvatar(url)
-      setAvatar(url)
+      setAvatar(readAvatar())
       window.dispatchEvent(new Event('whaleclient:avatar'))
       setMessage('头像已上传')
     } catch (err) {

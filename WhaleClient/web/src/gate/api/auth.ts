@@ -332,9 +332,13 @@ export const uploadAvatar = async (auth: StoredAuth, file: File): Promise<string
 /** 本地头像缓存（服务端路径或 dataURL） */
 const AVATAR_KEY = 'whaleclient:avatar'
 
+/** 服务端返回的是 /avatars/... 相对路径，要拼上后端地址；客户端页面和后端不同源（开发服务器、APK 内 file://） */
 export const readAvatar = (): string | null => {
   try {
-    return localStorage.getItem(AVATAR_KEY)
+    const value = localStorage.getItem(AVATAR_KEY)
+    if (!value?.startsWith('/')) return value
+    const server = loadAuth()?.server
+    return server ? server + value : value
   } catch {
     return null
   }
