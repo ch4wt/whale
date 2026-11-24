@@ -11,6 +11,7 @@ export const PAT_SCOPES = [
   'api_key:reveal',
   'api_key:write',
   'profile:read',
+  'profile:write',
   'usage:read',
   'wallet:read',
   'account_security:write',
