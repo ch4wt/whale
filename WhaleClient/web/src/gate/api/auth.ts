@@ -49,6 +49,8 @@ export const saveAuth = (auth: StoredAuth): void => {
 
 export const clearAuth = (): void => {
   localStorage.removeItem(STORAGE_KEY)
+  // 头像缓存跟账号走，换账号登录不能沿用上一个人的
+  localStorage.removeItem(AVATAR_KEY)
 }
 
 type EncryptionKey = { enabled: boolean; kid?: string; public_key?: string }

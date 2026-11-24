@@ -32,11 +32,11 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
       .then((value) => {
         if (!alive) return
         setProfile(value ?? null)
-        const remote = (value as { avatar?: string } | null)?.avatar
-        if (remote) {
-          saveAvatar(remote)
-          setAvatar(readAvatar())
-        }
+        // 以服务端为准：没设头像就清掉本地缓存，避免显示别的账号留下的头像
+        const remote = (value as { avatar?: string } | null)?.avatar ?? ''
+        saveAvatar(remote)
+        setAvatar(readAvatar())
+        window.dispatchEvent(new Event('whaleclient:avatar'))
       })
       .catch(() => undefined)
     return () => {
@@ -122,7 +122,13 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
         <div className='acc-field'>
           <span>新用户名</span>
           <div className='acc-inline'>
-            <input value={nameDraft} placeholder='输入新用户名' onChange={(event) => setNameDraft(event.target.value)} />
+            <input
+              value={nameDraft}
+              name='new-username'
+              autoComplete='off'
+              placeholder='输入新用户名'
+              onChange={(event) => setNameDraft(event.target.value)}
+            />
             <button type='button' disabled={busy === 'name'} onClick={saveName}>
               保存
             </button>
@@ -135,12 +141,14 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
             <input
               type='password'
               value={pwdCurrent}
+              autoComplete='new-password'
               placeholder='当前密码'
               onChange={(event) => setPwdCurrent(event.target.value)}
             />
             <input
               type='password'
               value={pwdNext}
+              autoComplete='new-password'
               placeholder='新密码'
               onChange={(event) => setPwdNext(event.target.value)}
             />
