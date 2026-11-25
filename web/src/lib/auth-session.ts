@@ -297,13 +297,24 @@ async function requestRefresh(
   }
 
   const first = await send()
+  if (first.status !== 401) return first
+
   // 刷新令牌是一次性的：多标签或并发请求会让其中一次拿 401
-  // 这里重试一次，避免偶发失败直接把管理员踢到登录页
-  if (first.status === 401) {
-    await new Promise((resolve) => setTimeout(resolve, 400))
-    return send()
+  await new Promise((resolve) => setTimeout(resolve, 400))
+  const second = await send()
+  if (second.status !== 401) return second
+
+  // 仍是 401：若当前访问令牌还没过期，当作临时失败，不把管理员踢下线
+  const auth = useAuthStore.getState().auth
+  const accessExpiresAt = (auth.session as { access_expires_at?: number } | undefined)
+    ?.access_expires_at
+  const stillValid =
+    Boolean(auth.accessToken) &&
+    (!accessExpiresAt || accessExpiresAt * 1000 > Date.now() + 30_000)
+  if (stillValid) {
+    return { status: 0 } as AuthRefreshHTTPResponse
   }
-  return first
+  return second
 }
 
 function runRefresh(refreshEpoch: number): Promise<RefreshOutcome> {

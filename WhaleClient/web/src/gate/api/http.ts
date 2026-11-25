@@ -54,8 +54,10 @@ export const request = async <T>(
 
   let response: Response
   try {
+    // 客户端只用 Bearer 令牌，不带 cookie：避免和后台管理端的会话 cookie 抢同一个域
     response = await fetch(`${server}${path}`, {
       ...rest,
+      credentials: 'omit',
       headers: finalHeaders,
       body: json !== undefined ? JSON.stringify(json) : rest.body,
     })
@@ -93,5 +95,5 @@ export const requestRaw = async (
 ): Promise<Response> => {
   const headers = new Headers(init.headers)
   if (init.bearer) headers.set('Authorization', `Bearer ${init.bearer}`)
-  return fetch(`${server}${path}`, { ...init, headers })
+  return fetch(`${server}${path}`, { ...init, credentials: 'omit', headers })
 }

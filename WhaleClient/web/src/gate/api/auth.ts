@@ -341,6 +341,7 @@ export const uploadAvatar = async (auth: StoredAuth, file: File): Promise<string
   const form = new FormData()
   form.append('file', file)
   const res = await fetch(auth.server + '/api/user/avatar', {
+    credentials: 'omit',
     method: 'POST',
     headers: { Authorization: `Bearer ${auth.token}` },
     body: form,
