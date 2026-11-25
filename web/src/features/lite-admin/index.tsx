@@ -106,6 +106,7 @@ type UserDetail = {
 }
 
 const USER_COLUMNS = ['账号', '充值', '赠金', '消耗', '剩余', '操作']
+const LOG_COLUMNS = ['时间', '用户', '模型', '消耗', '内容']
 
 async function getJson<T>(path: string): Promise<T> {
   const res = await api.get(path, { skipErrorHandler: true })
@@ -167,6 +168,7 @@ export function LiteAdmin() {
   const [colWidths, setColWidths] = useState<number[]>([150, 100, 120, 100, 100, 110])
   const [giftEditing, setGiftEditing] = useState<number | null>(null)
   const [giftDraft, setGiftDraft] = useState('')
+  const [logColWidths, setLogColWidths] = useState<number[]>([190, 120, 150, 90, 520])
   const [keys, setKeys] = useState<PlatformKey[]>([])
   const [editingKey, setEditingKey] = useState<PlatformKey | 'new' | null>(null)
   const [keyForm, setKeyForm] = useState({ name: '', base_url: 'https://api.deepseek.com', key: '' })
@@ -762,49 +764,78 @@ export function LiteAdmin() {
                 当前没有记录聊天内容。到「设置」里打开「记录聊天内容」。
               </p>
             )}
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>时间</TableHead>
-                  <TableHead>用户</TableHead>
-                  <TableHead>模型</TableHead>
-                  <TableHead className='text-right'>消耗</TableHead>
-                  <TableHead>内容</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {chatLogs.length === 0 ? (
+            <div className='overflow-x-auto'>
+              <table className='w-full caption-bottom text-sm' style={{ tableLayout: 'fixed' }}>
+                <colgroup>
+                  {logColWidths.map((width, index) => (
+                    <col key={index} style={{ width }} />
+                  ))}
+                </colgroup>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className='text-muted-foreground'>
-                      还没有日志
-                    </TableCell>
+                    {LOG_COLUMNS.map((label, index) => (
+                      <TableHead key={label} className='relative border-r last:border-r-0'>
+                        {label}
+                        {index < LOG_COLUMNS.length - 1 ? (
+                          <span
+                            className='bg-border hover:bg-primary absolute top-0 right-0 h-full w-0.5 cursor-col-resize select-none transition-colors'
+                            onMouseDown={(event) => {
+                              event.preventDefault()
+                              const startX = event.clientX
+                              const startWidth = logColWidths[index]
+                              const onMove = (moveEvent: MouseEvent) => {
+                                const next = Math.max(70, startWidth + moveEvent.clientX - startX)
+                                setLogColWidths((current) =>
+                                  current.map((value, position) => (position === index ? next : value))
+                                )
+                              }
+                              const onUp = () => {
+                                window.removeEventListener('mousemove', onMove)
+                                window.removeEventListener('mouseup', onUp)
+                              }
+                              window.addEventListener('mousemove', onMove)
+                              window.addEventListener('mouseup', onUp)
+                            }}
+                          />
+                        ) : null}
+                      </TableHead>
+                    ))}
                   </TableRow>
-                ) : (
-                  chatLogs.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell className='text-xs'>
-                        {new Date(row.created_at * 1000).toLocaleString('zh-CN')}
-                      </TableCell>
-                      <TableCell>{row.username || row.user_id}</TableCell>
-                      <TableCell className='text-xs'>{row.model_name}</TableCell>
-                      <TableCell className='text-right'>{money(row.cost)}</TableCell>
-                      <TableCell className='max-w-[520px] text-xs'>
-                        <div className='space-y-1'>
-                          {parseMessages(row.content).map((message, index) => (
-                            <div key={index} className='flex gap-1'>
-                              <span className='text-muted-foreground shrink-0'>
-                                {message.role === 'assistant' ? '小虎鲸：' : '你：'}
-                              </span>
-                              <span className='line-clamp-2 break-words'>{message.content}</span>
-                            </div>
-                          ))}
-                        </div>
+                </TableHeader>
+                <TableBody>
+                  {chatLogs.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className='text-muted-foreground'>
+                        还没有日志
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ) : (
+                    chatLogs.map((row) => (
+                      <TableRow key={row.id}>
+                        <TableCell className='text-xs'>
+                          {new Date(row.created_at * 1000).toLocaleString('zh-CN')}
+                        </TableCell>
+                        <TableCell>{row.username || row.user_id}</TableCell>
+                        <TableCell className='text-xs'>{row.model_name}</TableCell>
+                        <TableCell className='text-xs'>{money(row.cost)}</TableCell>
+                        <TableCell className='text-xs'>
+                          <div className='space-y-1'>
+                            {parseMessages(row.content).map((message, index) => (
+                              <div key={index} className='flex gap-1'>
+                                <span className='text-muted-foreground shrink-0'>
+                                  {message.role === 'assistant' ? '小虎鲸：' : '你：'}
+                                </span>
+                                <span className='break-words'>{message.content}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </table>
+            </div>
           </CardContent>
         </Card>
       ) : null}
