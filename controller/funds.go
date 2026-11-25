@@ -197,11 +197,11 @@ func GetUsageDetail(c *gin.Context) {
 	}
 
 	type item struct {
-		CreatedAt    int64   `json:"created_at"`
-		ModelName    string  `json:"model_name"`
-		PromptTokens int     `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-		Cost         float64 `json:"cost"`
+		CreatedAt        int64   `json:"created_at"`
+		ModelName        string  `json:"model_name"`
+		PromptTokens     int     `json:"prompt_tokens"`
+		CompletionTokens int     `json:"completion_tokens"`
+		Cost             float64 `json:"cost"`
 	}
 	out := make([]item, 0, len(logs))
 	for _, log := range logs {
@@ -301,32 +301,34 @@ func GetPlatformOverview(c *gin.Context) {
 	net := math.Round((gross-userGift)*100) / 100
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{
-		"key_count":      len(channels),
-		"upstream_topped_up": math.Round(upToppedUp*100) / 100,
+		"key_count":            len(channels),
+		"upstream_topped_up":   math.Round(upToppedUp*100) / 100,
 		"upstream_snapshot_at": time.Now().Unix(),
-		"upstream_balance":   math.Round(upBalance*100) / 100,
-		"upstream_used":      upUsed,
-		"user_paid":      math.Round(userPaid*100) / 100,
-		"user_used":      math.Round(userUsed*100) / 100,
-		"user_balance":   math.Round(userBalance*100) / 100,
-		"user_gift":      userGift,
-		"gross_profit":   gross,
-		"net_profit":     net,
+		"upstream_balance":     math.Round(upBalance*100) / 100,
+		"upstream_used":        upUsed,
+		"user_paid":            math.Round(userPaid*100) / 100,
+		"user_used":            math.Round(userUsed*100) / 100,
+		"user_balance":         math.Round(userBalance*100) / 100,
+		"user_gift":            userGift,
+		"gross_profit":         gross,
+		"net_profit":           net,
 	}})
 }
 
 // GetPlatformSettings / UpdatePlatformSettings 新用户赠金与消费倍率
 func GetPlatformSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{
-		"new_user_gift": math.Round(float64(common.QuotaForNewUser)/perYuanQuota()*100) / 100,
-		"group_ratio":   ratio_setting.GetGroupRatio("default"),
+		"new_user_gift":    math.Round(float64(common.QuotaForNewUser)/perYuanQuota()*100) / 100,
+		"group_ratio":      ratio_setting.GetGroupRatio("default"),
+		"log_chat_content": common.LogChatContentEnabled,
 	}})
 }
 
 func UpdatePlatformSettings(c *gin.Context) {
 	var req struct {
-		NewUserGift *float64 `json:"new_user_gift"`
-		GroupRatio  *float64 `json:"group_ratio"`
+		NewUserGift    *float64 `json:"new_user_gift"`
+		GroupRatio     *float64 `json:"group_ratio"`
+		LogChatContent *bool    `json:"log_chat_content"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		common.ApiErrorT(c, "Invalid parameters")
@@ -350,6 +352,16 @@ func UpdatePlatformSettings(c *gin.Context) {
 		}
 		payload, _ := json.Marshal(map[string]float64{"default": *req.GroupRatio})
 		if err := model.UpdateOption("GroupRatio", string(payload)); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	}
+	if req.LogChatContent != nil {
+		value := "false"
+		if *req.LogChatContent {
+			value = "true"
+		}
+		if err := model.UpdateOption("LogChatContentEnabled", value); err != nil {
 			common.ApiError(c, err)
 			return
 		}
@@ -500,4 +512,138 @@ func DeletePlatformKey(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
+// GetChatLogs 最近的对话日志（仅在开启内容记录后才有内容）
+func GetChatLogs(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "50"))
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+	// 只看对话内容（JSON 数组），排除充值/赠金这类管理日志
+	query := model.DB.Where("content LIKE '[%'")
+	if uid, err := strconv.Atoi(c.Query("user_id")); err == nil && uid > 0 {
+		query = query.Where("user_id = ?", uid)
+	}
+	var logs []model.Log
+	if err := query.Order("id desc").Limit(limit).Find(&logs).Error; err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	type item struct {
+		Id        int     `json:"id"`
+		UserId    int     `json:"user_id"`
+		Username  string  `json:"username"`
+		ModelName string  `json:"model_name"`
+		Quota     int     `json:"quota"`
+		Cost      float64 `json:"cost"`
+		Content   string  `json:"content"`
+		CreatedAt int64   `json:"created_at"`
+	}
+	out := make([]item, 0, len(logs))
+	for _, l := range logs {
+		out = append(out, item{
+			Id:        l.Id,
+			UserId:    l.UserId,
+			Username:  l.Username,
+			ModelName: l.ModelName,
+			Quota:     l.Quota,
+			Cost:      math.Round(toCNY(float64(l.Quota))*100) / 100,
+			Content:   l.Content,
+			CreatedAt: l.CreatedAt,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"items": out, "count": len(out)}})
+}
+
+// AddUserQuota 给用户余额加/减指定金额（人民币），用于调整赠金
+func AddUserQuota(c *gin.Context) {
+	var req struct {
+		UserId int     `json:"user_id"`
+		Amount float64 `json:"amount"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.UserId <= 0 {
+		common.ApiErrorT(c, "Invalid parameters")
+		return
+	}
+	delta := int(math.Round(req.Amount * perYuanQuota()))
+	if delta == 0 {
+		c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+		return
+	}
+	if delta > 0 {
+		if err := model.IncreaseUserQuota(req.UserId, delta, false); err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	} else if err := model.DecreaseUserQuota(req.UserId, -delta, false); err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	model.RecordLog(req.UserId, model.LogTypeManage,
+		common.NewMessage("Gift adjusted by admin: {{delta}}", map[string]any{
+			"delta": logger.FormatQuota(delta),
+		}))
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
+// GetUserDetail 单个用户的后台详情：注册方式、账号信息、操作记录
+func GetUserDetail(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id <= 0 {
+		common.ApiErrorT(c, "Invalid parameters")
+		return
+	}
+	user, err := model.GetUserById(id, false)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+
+	registerType := "用户名密码"
+	switch {
+	case user.WeChatId != "":
+		registerType = "微信"
+	case user.GitHubId != "":
+		registerType = "GitHub"
+	case user.OidcId != "":
+		registerType = "OIDC"
+	case user.Email != "":
+		registerType = "邮箱 + 密码"
+	}
+
+	type auditItem struct {
+		Action    string `json:"action"`
+		Content   string `json:"content"`
+		Ip        string `json:"ip"`
+		CreatedAt int64  `json:"created_at"`
+	}
+	var rows []model.AuditLog
+	model.LOG_DB.Where("user_id = ?", id).Order("id desc").Limit(80).Find(&rows)
+	audits := make([]auditItem, 0, len(rows))
+	for _, row := range rows {
+		audits = append(audits, auditItem{
+			Action:    row.Action,
+			Content:   row.Content,
+			Ip:        row.Ip,
+			CreatedAt: row.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{
+		"id":            user.Id,
+		"username":      user.Username,
+		"display_name":  user.DisplayName,
+		"email":         user.Email,
+		"role":          user.Role,
+		"status":        user.Status,
+		"group":         user.Group,
+		"register_type": registerType,
+		"created_at":    user.CreatedAt,
+		"last_login_at": user.LastLoginAt,
+		"quota":         toCNY(float64(user.Quota)),
+		"used":          toCNY(float64(user.UsedQuota)),
+		"request_count": user.RequestCount,
+		"audits":        audits,
+	}})
 }

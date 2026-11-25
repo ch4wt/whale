@@ -542,6 +542,12 @@ func PostTextConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, us
 
 	attachQuotaSaturation(ctx, relayInfo, other)
 
+	if ctx != nil && common.LogChatContentEnabled {
+		if text := ctx.GetString("log_chat_content"); text != "" {
+			extraContent = append(extraContent, common.NewMessage("{{content}}", map[string]any{"content": text}))
+		}
+	}
+
 	model.RecordConsumeLog(ctx, relayInfo.UserId, model.RecordConsumeLogParams{
 		ChannelId:        relayInfo.ChannelId,
 		PromptTokens:     summary.PromptTokens,

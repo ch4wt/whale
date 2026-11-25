@@ -917,6 +917,14 @@ func UpdateSelf(c *gin.Context) {
 		})
 		return
 	}
+	if cleanUser.Username != "" {
+		if current, err := model.GetUserById(cleanUser.Id, false); err == nil && current.Username != cleanUser.Username {
+			recordUserSecurityAudit(c, cleanUser.Id, "user.username_change", map[string]any{
+				"from": current.Username,
+				"to":   cleanUser.Username,
+			})
+		}
+	}
 	if err := cleanUser.Update(false); err != nil {
 		common.ApiError(c, err)
 		return

@@ -276,23 +276,34 @@ export function createRefreshRunner(
 async function requestRefresh(
   expectedSID?: string
 ): Promise<AuthRefreshHTTPResponse> {
-  try {
-    const response = await authClient.post(
-      '/api/user/auth/refresh',
-      undefined,
-      {
-        headers: expectedSID ? { 'X-Auth-Session': expectedSID } : undefined,
-      }
-    )
-    return { status: response.status, data: response.data }
-  } catch (error: unknown) {
-    if (!axios.isAxiosError(error)) return { status: 0, error }
-    return {
-      status: error.response?.status ?? 0,
-      data: error.response?.data,
-      error,
+  const send = async () => {
+    try {
+      const response = await authClient.post(
+        '/api/user/auth/refresh',
+        undefined,
+        {
+          headers: expectedSID ? { 'X-Auth-Session': expectedSID } : undefined,
+        }
+      )
+      return { status: response.status, data: response.data } as AuthRefreshHTTPResponse
+    } catch (error: unknown) {
+      if (!axios.isAxiosError(error)) return { status: 0, error } as AuthRefreshHTTPResponse
+      return {
+        status: error.response?.status ?? 0,
+        data: error.response?.data,
+        error,
+      } as AuthRefreshHTTPResponse
     }
   }
+
+  const first = await send()
+  // 刷新令牌是一次性的：多标签或并发请求会让其中一次拿 401
+  // 这里重试一次，避免偶发失败直接把管理员踢到登录页
+  if (first.status === 401) {
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    return send()
+  }
+  return first
 }
 
 function runRefresh(refreshEpoch: number): Promise<RefreshOutcome> {

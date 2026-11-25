@@ -98,6 +98,9 @@ var MemoryCacheEnabled bool
 
 var LogConsumeEnabled = true
 
+// LogChatContentEnabled 是否把聊天内容写入日志（默认关闭，仅管理员可开）
+var LogChatContentEnabled = false
+
 var TLSInsecureSkipVerify bool
 var InsecureTLSConfig = &tls.Config{InsecureSkipVerify: true}
 

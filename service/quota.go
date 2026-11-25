@@ -241,6 +241,11 @@ func PostWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, mod
 
 	logModel := modelName
 	logContent = append(logContent, extraContent...)
+	if ctx != nil && common.LogChatContentEnabled {
+		if text := ctx.GetString("log_chat_content"); text != "" {
+			logContent = append(logContent, common.NewMessage("{{content}}", map[string]any{"content": text}))
+		}
+	}
 	other := GenerateWssOtherInfo(ctx, relayInfo, usage, modelRatio, groupRatio,
 		completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), modelPrice, relayInfo.PriceData.GroupRatioInfo.GroupSpecialRatio)
 	if tieredResult != nil {
@@ -380,6 +385,11 @@ func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, u
 
 	logModel := billingModelName
 	logContent = append(logContent, extraContent...)
+	if ctx != nil && common.LogChatContentEnabled {
+		if text := ctx.GetString("log_chat_content"); text != "" {
+			logContent = append(logContent, common.NewMessage("{{content}}", map[string]any{"content": text}))
+		}
+	}
 	other := GenerateAudioOtherInfo(ctx, relayInfo, usage, modelRatio, groupRatio,
 		completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), modelPrice, relayInfo.PriceData.GroupRatioInfo.GroupSpecialRatio)
 	if tieredResult != nil {
