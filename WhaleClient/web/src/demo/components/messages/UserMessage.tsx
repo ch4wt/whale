@@ -6,6 +6,7 @@ import { IconEditOutline16 } from '../base/icons.js'
 import { editMessage, retryUpload } from '../../services/chat/store.js'
 import { readAvatar } from '../../../gate/api/auth.js'
 import { brand } from '../../app/brand.js'
+import { AvatarViewer } from '../../../gate/views/AvatarViewer.js'
 import { stopReadAloud } from '../../services/speech/readAloud.js'
 import type { UserMessage as UserMessageType } from '../../services/chat/types.js'
 import { Button } from '../base/Button.js'
@@ -46,6 +47,7 @@ export const UserMessage = memo(function UserMessage({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const isMobile = useIsMobile()
   const [avatar, setAvatar] = useState<string | null>(() => readAvatar())
+  const [viewing, setViewing] = useState(false)
 
   useEffect(() => {
     const sync = () => setAvatar(readAvatar())
@@ -71,7 +73,15 @@ export const UserMessage = memo(function UserMessage({
 
   return (
     <div className={clsx(styles.container, isFirst && styles.isFirst)}>
-      <img className={styles.userAvatar} src={avatar || brand.avatar} alt="" />
+      <img
+        className={styles.userAvatar}
+        src={avatar || brand.avatar}
+        alt=""
+        onClick={() => setViewing(true)}
+      />
+      {viewing ? (
+        <AvatarViewer src={avatar || brand.avatar} onClose={() => setViewing(false)} />
+      ) : null}
       {message.files.length > 0 ? (
         <div
           className={clsx(

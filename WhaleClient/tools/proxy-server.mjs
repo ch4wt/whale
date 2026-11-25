@@ -1,4 +1,4 @@
-// 同源代理：静态文件 + 把 /api、/v1 转发到 new-api
+// 同源代理：静态文件 + 把 /api、/v1、/avatars 转发到 new-api
 // 用法：API_BASE=http://your-server node tools/proxy-server.mjs [port]
 import http from 'node:http'
 import { createReadStream, existsSync, statSync } from 'node:fs'
@@ -71,7 +71,7 @@ const serve = (req, res) => {
 
 http
   .createServer((req, res) => {
-    if (req.url?.startsWith('/api/') || req.url?.startsWith('/v1/')) {
+    if (req.url?.startsWith('/api/') || req.url?.startsWith('/v1/') || req.url?.startsWith('/avatars/')) {
       proxy(req, res)
       return
     }

@@ -25,7 +25,7 @@ import { showToast } from '../base/toastState.js'
 import { openSettings } from '../settings/settingsDialogState.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
-import { readAvatar } from '../../../gate/api/auth.js'
+import { fetchSelf, loadAuth, readAvatar, saveAvatar } from '../../../gate/api/auth.js'
 import { AppDialog, isMobile } from '../../../gate/views/AppDialog.js'
 import { AccountDialog } from '../../../gate/views/AccountDialog.js'
 import { DownloadPopover } from '../../../gate/views/DownloadPopover.js'
@@ -34,8 +34,10 @@ import styles from './Sider.module.css'
 
 const SelectIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-    <ellipse cx="8" cy="8" rx="5.6" ry="4.2" stroke="currentColor" strokeWidth="1.2" />
-    <path d="M5.4 10.6 10.6 5.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <circle cx="4" cy="5.5" r="1.8" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    <path d="M7.2 5.5h5.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <circle cx="4" cy="10.5" r="1.8" stroke="currentColor" strokeWidth="1.2" fill="none" />
+    <path d="M7.2 10.5h5.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
   </svg>
 )
 
@@ -63,8 +65,25 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
 
   useEffect(() => {
     const sync = () => setAvatar(readAvatar())
+    const syncUser = () => setUserName(readSession()?.username ?? '')
     window.addEventListener('whaleclient:avatar', sync)
-    return () => window.removeEventListener('whaleclient:avatar', sync)
+    const auth = loadAuth()
+    if (auth) {
+      fetchSelf(auth)
+        .then((profile) => {
+          const remote = (profile as { avatar?: string } | null)?.avatar
+          if (remote) {
+            saveAvatar(remote)
+            sync()
+          }
+        })
+        .catch(() => undefined)
+    }
+    window.addEventListener('whaleclient:user', syncUser)
+    return () => {
+      window.removeEventListener('whaleclient:avatar', sync)
+      window.removeEventListener('whaleclient:user', syncUser)
+    }
   }, [])
 
   useEffect(() => {
@@ -85,6 +104,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const [hoverDownload, setHoverDownload] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
   const [avatar, setAvatar] = useState<string | null>(() => readAvatar())
+  const [userName, setUserName] = useState(() => readSession()?.username ?? '')
 
   useEffect(() => {
     const refresh = () => setPinVersion((value) => value + 1)
@@ -201,21 +221,6 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
         {t('newChat')}
       </button>
       <div className={styles.listWrap} onMouseEnter={() => setHoverList(true)} onMouseLeave={() => setHoverList(false)}>
-        <div className={styles.listHeader}>
-          <span>最近对话</span>
-          <button
-            type="button"
-            className={clsx(styles.selectToggle, (hoverList || selectMode) && styles.selectToggleVisible)}
-            title={selectMode ? '取消多选' : '多选'}
-            aria-label={selectMode ? '取消多选' : '多选'}
-            onClick={() => {
-              setSelectMode((value) => !value)
-              setSelected(new Set())
-            }}
-          >
-            {selectMode ? <span className={styles.cancelText}>取消</span> : <SelectIcon />}
-          </button>
-        </div>
         {query.trim() ? (
           <div className={styles.list}>
             {filtered.length === 0 ? (
@@ -238,9 +243,26 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
           </div>
         ) : (
         <div className={styles.list}>
-          {groups.map((group) => (
+          {groups.map((group, groupIndex) => (
             <div key={group.key} className={styles.section}>
-              <div className={styles.sectionHeader}>{group.label}</div>
+              <div className={styles.sectionHeader}>
+                <span>{group.label}</span>
+                {groupIndex === 0 ? (
+                  <button
+                    type="button"
+                    className={styles.selectToggle}
+                    data-tip={selectMode ? '取消多选' : '多选'}
+                    title={selectMode ? '取消多选' : '多选'}
+                    aria-label={selectMode ? '取消多选' : '多选'}
+                    onClick={() => {
+                      setSelectMode((value) => !value)
+                      setSelected(new Set())
+                    }}
+                  >
+                    {selectMode ? <span className={styles.cancelText}>取消</span> : <SelectIcon />}
+                  </button>
+                ) : null}
+              </div>
               {group.sessions.map((session) => (
                 <SessionItem
                   key={session.id}
@@ -335,7 +357,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
               )}
             </span>
             <span className={styles.accountInfo}>
-              <span className={styles.accountName}>{session?.username || brand.account || brand.name}</span>
+              <span className={styles.accountName}>{userName || session?.username || brand.account || brand.name}</span>
             </span>
           </button>
           <button
@@ -407,6 +429,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
       {searchOpen ? <SearchDialog onClose={() => setSearchOpen(false)} /> : null}
       {appOpen ? <AppDialog onClose={() => setAppOpen(false)} /> : null}
       {accountOpen ? <AccountDialog onClose={() => setAccountOpen(false)} /> : null}
+
       {deleting ? (
         <Modal
           title={t('deleteSessionModalContentTitle')}

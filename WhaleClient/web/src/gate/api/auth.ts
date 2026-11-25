@@ -34,6 +34,24 @@ export const hasScope = (auth: StoredAuth, scope: string): boolean => Boolean(au
 
 const STORAGE_KEY = 'whaleclient:auth'
 
+/** 删除本客户端遗留的访问令牌（只按名称前缀匹配，不动别的客户端） */
+const pruneOldTokens = async (server: string, sessionToken: string): Promise<void> => {
+  const list = await request<{ items?: { id: number; name?: string }[] }>(
+    server,
+    '/api/user/access_tokens',
+    { method: 'GET', bearer: sessionToken }
+  ).catch(() => null)
+  const items = list?.items ?? []
+  for (const item of items) {
+    if (item.name && item.name.startsWith('小虎鲸 Web')) {
+      await request(server, `/api/user/access_tokens/${item.id}`, {
+        method: 'DELETE',
+        bearer: sessionToken,
+      }).catch(() => undefined)
+    }
+  }
+}
+
 export const loadAuth = (): StoredAuth | null => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -199,6 +217,9 @@ const createAccessToken = async (pending: PendingSession, verification: Record<s
     bearer: sessionToken,
     json: { scope: 'access_token.generate', context, ...verification },
   })
+
+  // 先清掉本客户端之前建的令牌，避免撞到每用户令牌上限
+  await pruneOldTokens(server, sessionToken).catch(() => undefined)
 
   const created = await request<{ token: string }>(server, '/api/user/access_tokens', {
     method: 'POST',

@@ -118,6 +118,7 @@ export const SessionItem = memo(function SessionItem({
         </span>
       ) : null}
       <div className={styles.title}>{displayTitle}</div>
+
       {selectable ? null : (
       <div className={styles.action} onClick={(event) => event.stopPropagation()}>
         <Menu

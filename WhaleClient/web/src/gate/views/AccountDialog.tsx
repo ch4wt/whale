@@ -9,7 +9,8 @@ import {
   updateUsername,
   uploadAvatar,
 } from '../api/auth.js'
-import { readSession } from '../session.js'
+import { readSession, rememberUser } from '../session.js'
+import { AvatarViewer } from './AvatarViewer.js'
 
 /** 账号管理：头像、用户名、密码 */
 export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
@@ -22,6 +23,7 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
   const [busy, setBusy] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [viewing, setViewing] = useState(false)
 
   const session = readSession()
 
@@ -51,7 +53,10 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
     setMessage('')
     try {
       await updateUsername(auth, nameDraft.trim())
-      setProfile((prev) => ({ ...(prev ?? {}), username: nameDraft.trim() }))
+      const nextName = nameDraft.trim()
+      rememberUser(nextName)
+      setProfile((prev) => ({ ...(prev ?? {}), username: nextName }))
+      window.dispatchEvent(new Event('whaleclient:user'))
       setMessage('用户名已更新')
       setNameDraft('')
     } catch (err) {
@@ -107,7 +112,11 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
 
         <div className='acc-avatar-row'>
           <span className='acc-avatar'>
-            {avatar ? <img src={avatar} alt='' /> : displayName.slice(0, 1).toUpperCase()}
+            {avatar ? (
+              <img src={avatar} alt='' onClick={() => setViewing(true)} />
+            ) : (
+              displayName.slice(0, 1).toUpperCase()
+            )}
           </span>
           <label className='acc-upload'>
             更换头像
@@ -161,6 +170,7 @@ export const AccountDialog = ({ onClose }: { onClose: () => void }) => {
         {error ? <div className='acc-error'>{error}</div> : null}
         {message ? <div className='acc-ok'>{message}</div> : null}
       </div>
+      {viewing && avatar ? <AvatarViewer src={avatar} onClose={() => setViewing(false)} /> : null}
     </div>
   )
 }

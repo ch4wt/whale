@@ -127,7 +127,7 @@ const enqueueUpload = (
   new Promise<string>((resolve, reject) => {
     queue.push(async () => {
       if (signal.aborted) {
-        reject(signal.reason)
+        reject(getAbortReason(signal))
         return
       }
       try {
