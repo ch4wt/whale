@@ -5,6 +5,12 @@ import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -44,6 +50,16 @@ type UserRow = {
 
 type Settings = { new_user_gift: number; group_ratio: number }
 
+type PlatformKey = {
+  id: number
+  name: string
+  base_url: string
+  key_masked: string
+  status: number
+  balance: number
+  models: string
+}
+
 const money = (value: number) => `¥${(value ?? 0).toFixed(2)}`
 
 async function getJson<T>(path: string): Promise<T> {
@@ -74,6 +90,9 @@ export function LiteAdmin() {
   const [platform, setPlatform] = useState<Platform | null>(null)
   const [users, setUsers] = useState<UserRow[]>([])
   const [settings, setSettings] = useState<Settings>({ new_user_gift: 1, group_ratio: 1.5 })
+  const [keys, setKeys] = useState<PlatformKey[]>([])
+  const [editingKey, setEditingKey] = useState<PlatformKey | 'new' | null>(null)
+  const [keyForm, setKeyForm] = useState({ name: '', base_url: 'https://api.deepseek.com', key: '' })
   const [giftInput, setGiftInput] = useState('1')
   const [ratioInput, setRatioInput] = useState('1.5')
   const [saving, setSaving] = useState(false)
@@ -83,12 +102,14 @@ export function LiteAdmin() {
   const reload = async () => {
     setError('')
     try {
-      const [overview, fundData, settingData] = await Promise.all([
+      const [overview, keyData, fundData, settingData] = await Promise.all([
         getJson<{ data: Platform }>('/api/user/platform/overview'),
+        getJson<{ data: { items: PlatformKey[] } }>('/api/user/platform/keys'),
         getJson<{ data: { users: UserRow[] } }>('/api/user/funds/overview'),
         getJson<{ data: Settings }>('/api/user/platform/settings'),
       ])
       setPlatform(overview?.data ?? null)
+      setKeys(keyData?.data?.items ?? [])
       setUsers(fundData?.data?.users ?? [])
       if (settingData?.data) {
         setSettings(settingData.data)
@@ -103,6 +124,29 @@ export function LiteAdmin() {
   useEffect(() => {
     void reload()
   }, [])
+
+  const saveKey = async () => {
+    setError('')
+    try {
+      await api.post('/api/user/platform/keys', {
+        id: editingKey && editingKey !== 'new' ? editingKey.id : 0,
+        name: keyForm.name,
+        base_url: keyForm.base_url,
+        key: keyForm.key,
+        status: 1,
+      })
+      setEditingKey(null)
+      await reload()
+    } catch (err) {
+      setError((err as Error).message)
+    }
+  }
+
+  const removeKey = async (id: number) => {
+    if (!window.confirm('删除这个 Key？')) return
+    await api.delete(`/api/user/platform/keys/${id}`)
+    await reload()
+  }
 
   const saveSettings = async () => {
     setSaving(true)
@@ -173,12 +217,71 @@ export function LiteAdmin() {
 
           {tab === 'platform' ? (
             <>
+              <Card>
+                <CardHeader className='flex flex-row items-center justify-between'>
+                  <CardTitle className='text-sm'>平台 Key</CardTitle>
+                  <Button
+                    size='sm'
+                    onClick={() => {
+                      setEditingKey('new')
+                      setKeyForm({ name: '', base_url: 'https://api.deepseek.com', key: '' })
+                    }}
+                  >
+                    添加 Key
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>名称</TableHead>
+                        <TableHead>接口地址</TableHead>
+                        <TableHead>Key</TableHead>
+                        <TableHead className='text-right'>余额</TableHead>
+                        <TableHead className='text-right'>操作</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {keys.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className='text-muted-foreground'>
+                            还没有 Key
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        keys.map((row) => (
+                          <TableRow key={row.id}>
+                            <TableCell>{row.name}</TableCell>
+                            <TableCell className='text-xs'>{row.base_url}</TableCell>
+                            <TableCell className='font-mono text-xs'>{row.key_masked}</TableCell>
+                            <TableCell className='text-right'>{money(row.balance)}</TableCell>
+                            <TableCell className='text-right'>
+                              <div className='flex justify-end gap-2'>
+                                <Button
+                                  size='sm'
+                                  variant='ghost'
+                                  onClick={() => {
+                                    setEditingKey(row)
+                                    setKeyForm({ name: row.name, base_url: row.base_url, key: '' })
+                                  }}
+                                >
+                                  编辑
+                                </Button>
+                                <Button size='sm' variant='ghost' onClick={() => removeKey(row.id)}>
+                                  删除
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+
               <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-                <StatCard
-                  label='平台 API Key'
-                  value={platform?.key_masked || '—'}
-                  hint={platform?.base_url || ''}
-                />
+
                 <StatCard
                   label='累计充值金额'
                   value={money(platform?.upstream_topped_up ?? 0)}
@@ -249,7 +352,33 @@ export function LiteAdmin() {
             </Card>
           ) : null}
 
-          {tab === 'settings' ? (
+          <Dialog open={Boolean(editingKey)} onOpenChange={(open) => !open && setEditingKey(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingKey === 'new' ? '添加 Key' : '编辑 Key'}</DialogTitle>
+          </DialogHeader>
+          <div className='space-y-3'>
+            <Input
+              placeholder='名称'
+              value={keyForm.name}
+              onChange={(event) => setKeyForm({ ...keyForm, name: event.target.value })}
+            />
+            <Input
+              placeholder='接口地址'
+              value={keyForm.base_url}
+              onChange={(event) => setKeyForm({ ...keyForm, base_url: event.target.value })}
+            />
+            <Input
+              placeholder={editingKey === 'new' ? 'Key（sk-...）' : '留空则不修改'}
+              value={keyForm.key}
+              onChange={(event) => setKeyForm({ ...keyForm, key: event.target.value })}
+            />
+            <Button onClick={saveKey}>保存</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {tab === 'settings' ? (
             <Card className='max-w-xl'>
               <CardHeader>
                 <CardTitle className='text-sm'>平台设置</CardTitle>

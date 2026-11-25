@@ -219,59 +219,13 @@ func GetUsageDetail(c *gin.Context) {
 
 // GetPlatformOverview 平台总量 + 用户汇总，金额一律人民币（仅管理员）
 func GetPlatformOverview(c *gin.Context) {
-	channel, chanErr := model.GetEnabledChannelForBalance()
+	var channels []model.Channel
+	model.DB.Where("status = ?", 1).Find(&channels)
 
-	keyMasked := ""
-	baseURL := ""
-	if chanErr == nil {
-		k := channel.Key
-		if len(k) > 12 {
-			keyMasked = k[:8] + "…" + k[len(k)-4:]
-		} else {
-			keyMasked = "…"
-		}
-		if channel.BaseURL != nil {
-			baseURL = *channel.BaseURL
-		}
+	upBalance := 0.0
+	for i := range channels {
+		upBalance += upstreamBalance(&channels[i])
 	}
-
-	// 上游账户
-	type balanceInfo struct {
-		Currency        string `json:"currency"`
-		TotalBalance    string `json:"total_balance"`
-		GrantedBalance  string `json:"granted_balance"`
-		ToppedUpBalance string `json:"topped_up_balance"`
-	}
-	var info balanceInfo
-	if chanErr == nil {
-		url := strings.TrimRight(baseURL, "/")
-		if url == "" {
-			url = "https://api.deepseek.com"
-		}
-		transport := &http.Transport{Proxy: nil, ForceAttemptHTTP2: false}
-		client := &http.Client{Timeout: 15 * time.Second, Transport: transport}
-		req, err := http.NewRequest(http.MethodGet, url+"/user/balance", nil)
-		if err == nil {
-			req.Header.Set("Authorization", "Bearer "+channel.Key)
-			req.Header.Set("User-Agent", "new-api-funds/1.0")
-			if resp, err := client.Do(req); err == nil {
-				var body struct {
-					BalanceInfos []balanceInfo `json:"balance_infos"`
-				}
-				_ = json.NewDecoder(resp.Body).Decode(&body)
-				resp.Body.Close()
-				if len(body.BalanceInfos) > 0 {
-					info = body.BalanceInfos[0]
-				}
-			}
-		}
-	}
-
-	f := func(s string) float64 {
-		v, _ := strconv.ParseFloat(s, 64)
-		return v
-	}
-	upBalance := f(info.TotalBalance)
 	// 累计口径：充值只在余额上涨时增加，消耗按余额下降累计
 	stat, statErr := model.RecordPlatformBalance(upBalance)
 	upToppedUp, upUsed := upBalance, 0.0
@@ -347,8 +301,7 @@ func GetPlatformOverview(c *gin.Context) {
 	net := math.Round((gross-userGift)*100) / 100
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{
-		"key_masked":     keyMasked,
-		"base_url":       baseURL,
+		"key_count":      len(channels),
 		"upstream_topped_up": math.Round(upToppedUp*100) / 100,
 		"upstream_snapshot_at": time.Now().Unix(),
 		"upstream_balance":   math.Round(upBalance*100) / 100,
@@ -400,6 +353,151 @@ func UpdatePlatformSettings(c *gin.Context) {
 			common.ApiError(c, err)
 			return
 		}
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
+func maskKey(key string) string {
+	if len(key) > 12 {
+		return key[:8] + "…" + key[len(key)-4:]
+	}
+	if key == "" {
+		return ""
+	}
+	return "…"
+}
+
+// upstreamBalance 查询某个渠道对应的上游余额
+func upstreamBalance(channel *model.Channel) float64 {
+	base := "https://api.deepseek.com"
+	if channel.BaseURL != nil && *channel.BaseURL != "" {
+		base = strings.TrimRight(*channel.BaseURL, "/")
+	}
+	transport := &http.Transport{Proxy: nil, ForceAttemptHTTP2: false}
+	client := &http.Client{Timeout: 10 * time.Second, Transport: transport}
+	req, err := http.NewRequest(http.MethodGet, base+"/user/balance", nil)
+	if err != nil {
+		return 0
+	}
+	req.Header.Set("Authorization", "Bearer "+channel.Key)
+	req.Header.Set("User-Agent", "new-api-funds/1.0")
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0
+	}
+	defer resp.Body.Close()
+	var body struct {
+		BalanceInfos []struct {
+			TotalBalance string `json:"total_balance"`
+		} `json:"balance_infos"`
+	}
+	if json.NewDecoder(resp.Body).Decode(&body) != nil || len(body.BalanceInfos) == 0 {
+		return 0
+	}
+	v, _ := strconv.ParseFloat(body.BalanceInfos[0].TotalBalance, 64)
+	return v
+}
+
+// GetPlatformKeys 平台 Key 列表，带各自余额
+func GetPlatformKeys(c *gin.Context) {
+	var channels []model.Channel
+	if err := model.DB.Order("id asc").Find(&channels).Error; err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	type item struct {
+		Id        int     `json:"id"`
+		Name      string  `json:"name"`
+		BaseURL   string  `json:"base_url"`
+		KeyMasked string  `json:"key_masked"`
+		Status    int     `json:"status"`
+		Balance   float64 `json:"balance"`
+		Models    string  `json:"models"`
+	}
+	out := make([]item, 0, len(channels))
+	for i := range channels {
+		base := ""
+		if channels[i].BaseURL != nil {
+			base = *channels[i].BaseURL
+		}
+		out = append(out, item{
+			Id:        channels[i].Id,
+			Name:      channels[i].Name,
+			BaseURL:   base,
+			KeyMasked: maskKey(channels[i].Key),
+			Status:    channels[i].Status,
+			Balance:   upstreamBalance(&channels[i]),
+			Models:    channels[i].Models,
+		})
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"items": out}})
+}
+
+// SavePlatformKey 新增或编辑平台 Key
+func SavePlatformKey(c *gin.Context) {
+	var req struct {
+		Id      int    `json:"id"`
+		Name    string `json:"name"`
+		BaseURL string `json:"base_url"`
+		Key     string `json:"key"`
+		Status  int    `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.Name == "" {
+		common.ApiErrorT(c, "Invalid parameters")
+		return
+	}
+	if req.Status == 0 {
+		req.Status = 1
+	}
+	baseURL := req.BaseURL
+	channel := model.Channel{
+		Id:      req.Id,
+		Name:    req.Name,
+		Type:    1,
+		BaseURL: &baseURL,
+		Status:  req.Status,
+		Models:  "deepseek-chat,deepseek-reasoner,deepseek-flash,deepseek-v4-flash",
+		Group:   "default",
+	}
+	if req.Key != "" {
+		channel.Key = req.Key
+	}
+	if req.Id == 0 {
+		if channel.Key == "" {
+			common.ApiErrorT(c, "Key 不能为空")
+			return
+		}
+		if err := model.DB.Create(&channel).Error; err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	} else {
+		updates := map[string]any{
+			"name":     req.Name,
+			"base_url": baseURL,
+			"status":   req.Status,
+		}
+		if req.Key != "" {
+			updates["key"] = req.Key
+		}
+		if err := model.DB.Model(&model.Channel{}).Where("id = ?", req.Id).Updates(updates).Error; err != nil {
+			common.ApiError(c, err)
+			return
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
+}
+
+// DeletePlatformKey 删除平台 Key
+func DeletePlatformKey(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil || id == 0 {
+		common.ApiErrorT(c, "Invalid parameters")
+		return
+	}
+	if err := model.DB.Delete(&model.Channel{}, id).Error; err != nil {
+		common.ApiError(c, err)
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": ""})
 }
