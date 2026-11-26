@@ -1,9 +1,11 @@
+import { IOS_HINT, isIOS } from '../iosNotice.js'
 import { useMemo, useState } from 'react'
 import qrcode from '../../vendor/qrcode-generator.js'
 
 /** 悬停菜单项时出现的下载二维码，鼠标移开即消失 */
 export const DownloadPopover = () => {
   const url = `${location.origin}/download/whalegirl.apk`
+  const iosBlocked = isIOS()
   const svg = useMemo(() => {
     const qr = qrcode(0, 'M')
     qr.addData(url)

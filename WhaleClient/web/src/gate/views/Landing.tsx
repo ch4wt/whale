@@ -1,4 +1,6 @@
 import { useState } from 'react'
+
+import { IOS_HINT, isIOS } from '../iosNotice.js'
 import { loadAuth } from '../api/auth.js'
 import { AppDialog, isMobile } from './AppDialog.js'
 import {
@@ -63,7 +65,17 @@ export const Landing = () => {
         </div>
         <div className="lp-nav-right">
           {isMobile() ? (
-            <a className="lp-getapp" href="download/whalegirl.apk" download>
+            <a
+              className="lp-getapp"
+              href="download/whalegirl.apk"
+              download
+              onClick={(event) => {
+                if (isIOS()) {
+                  event.preventDefault()
+                  window.alert(IOS_HINT)
+                }
+              }}
+            >
               获取 APP
             </a>
           ) : (

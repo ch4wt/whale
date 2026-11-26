@@ -1,3 +1,4 @@
+import { IOS_HINT, isIOS } from '../iosNotice.js'
 import { useMemo, useState } from 'react'
 import qrcode from '../../vendor/qrcode-generator.js'
 
@@ -5,6 +6,7 @@ const isMobile = () => window.matchMedia('(max-width: 768px)').matches
 
 const AppDialog = ({ onClose }: { onClose: () => void }) => {
   const url = `${location.origin}/download/whalegirl.apk`
+  const iosBlocked = isIOS()
   const svg = useMemo(() => {
     const qr = qrcode(0, 'M')
     qr.addData(url)
