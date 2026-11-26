@@ -2528,3 +2528,19 @@ select {
   color: #4b5563;
   text-align: left;
 }
+
+/* 安装弹窗：分平台 */
+.lp-dialog-wide { max-width: 480px; }
+.lp-platform {
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f5f7fb;
+  text-align: left;
+}
+.lp-platform-head {
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
