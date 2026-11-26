@@ -48,7 +48,7 @@ const Root = () => {
   // 只有 #chat 才进会话；其他一律先看首页
   const [route, setRoute] = useState(() => location.hash)
   useEffect(() => {
-    document.title = route === '#chat' ? 'Whale Chat' : route === '#usage' ? '用量与余额' : 'Whale Girl'
+    document.title = route === '#chat' ? 'Whale Chat' : route === '#billing' ? '账单' : route === '#usage' ? '用量与余额' : 'Whale Girl'
   }, [route])
 
   useEffect(() => {
@@ -91,7 +91,7 @@ const Root = () => {
     }
   }, [auth, key])
 
-  if (route === '#usage' && auth) {
+  if ((route === '#usage' || route === '#billing') && auth) {
     return <Usage />
   }
 
