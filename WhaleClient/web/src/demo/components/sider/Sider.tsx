@@ -26,6 +26,7 @@ import { openSettings } from '../settings/settingsDialogState.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
 import { fetchSelf, loadAuth, readAvatar, saveAvatar } from '../../../gate/api/auth.js'
+import { DownloadPopover } from '../../../gate/views/DownloadPopover.js'
 import { AppDialog, isMobile } from '../../../gate/views/AppDialog.js'
 import { AccountDialog } from '../../../gate/views/AccountDialog.js'
 import { SearchDialog } from './SearchDialog.js'
@@ -370,10 +371,17 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
 
           {menuOpen ? (
             <div className={styles.menu}>
-              <button type="button" className={styles.menuItem} onClick={() => setAppOpen(true)}>
-                <IconDownloadOutline16 />
-                下载手机应用
-              </button>
+              <div
+                className={styles.downloadWrap}
+                onMouseEnter={() => setHoverDownload(true)}
+                onMouseLeave={() => setHoverDownload(false)}
+              >
+                <button type="button" className={styles.menuItem} onClick={() => setAppOpen(true)}>
+                  <IconDownloadOutline16 />
+                  下载手机应用
+                </button>
+                {hoverDownload ? <DownloadPopover /> : null}
+              </div>
               <a className={styles.menuItem} href="#usage" target="_blank" rel="noreferrer">
                 <IconDataOutline16 />
                 用量与余额
