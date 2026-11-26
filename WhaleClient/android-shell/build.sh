@@ -9,7 +9,7 @@
 #
 # 变体参数（环境变量）：
 #   DS_APP_NAME        应用显示名，默认 "DeepSeek Chat"
-#   DS_PKG             包名，默认 com.tun.whale（不同包名可同时安装）
+#   DS_PKG             包名，默认 whale.app（不同包名可同时安装）
 #   DS_UPSTREAM        上游 API，默认 https://api.deepseek.com
 #   DS_STRIP_ANTHROPIC true 时把 /anthropic 前缀去掉（ModelHub 需要）
 #   DS_DEFAULT_KEY     首次启动预填的 API Key（空 = 不预填）
@@ -28,7 +28,7 @@ DIST="$PROJ_DIR/dist"
 SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-$HOME/android-sdk}}"
 BT="35.0.0"
 PLATFORM="android-35"
-PKG="${DS_PKG:-com.tun.whale}"
+PKG="${DS_PKG:-whale.app}"
 APP_NAME="${DS_APP_NAME:-小虎鲸}"
 UPSTREAM="${DS_UPSTREAM:-http://nlb-m49t3666wybeevyd16.cn-beijing.nlb.aliyuncsslb.com}"
 STRIP_ANTHROPIC="${DS_STRIP_ANTHROPIC:-false}"
@@ -134,7 +134,7 @@ PY
 
 # 包名（变体之间可共存）
 if [ "$PKG" != "com.tun.whale" ]; then
-  find "$BUILD/src" -name '*.java' -exec sed -i '' "s/^package com\.tun\.dsapp;/package $PKG;/" {} +
+  find "$BUILD/src" -name '*.java' -exec sed -i '' "s/^package com\.tun\.whale;/package $PKG;/" {} +
 fi
 
 if [ -n "$AVATAR_SRC" ]; then
@@ -158,7 +158,7 @@ sed -e "s|@UPSTREAM@|$UPSTREAM_ESC|g" \
     -e "s|@VERSION_CODE@|$VERSION_CODE|g" \
     "$APP_DIR/template/BuildConfig.java.in" > "$BUILD/gen-src/$PKG_PATH/BuildConfig.java"
 if [ "$PKG" != "com.tun.whale" ]; then
-  sed -i '' "s/^package com\.tun\.dsapp;/package $PKG;/" "$BUILD/gen-src/$PKG_PATH/BuildConfig.java"
+  sed -i '' "s/^package com\.tun\.whale;/package $PKG;/" "$BUILD/gen-src/$PKG_PATH/BuildConfig.java"
 fi
 grep -q "UPSTREAM = \"$UPSTREAM\"" "$BUILD/gen-src/$PKG_PATH/BuildConfig.java" \
   || die "BuildConfig UPSTREAM 注入失败"
@@ -188,7 +188,7 @@ log "aapt2 compile"
 
 sed -e "s/android:versionCode=\"[0-9]*\"/android:versionCode=\"$VERSION_CODE\"/" \
     -e "s/android:versionName=\"[^\"]*\"/android:versionName=\"$VERSION_NAME\"/" \
-    -e "s/package=\"com\.tun\.dsapp\"/package=\"$PKG\"/" \
+    -e "s/package=\"com\.tun\.whale\"/package=\"$PKG\"/" \
     "$APP_DIR/AndroidManifest.xml" > "$BUILD/AndroidManifest.xml"
 
 log "aapt2 link"
