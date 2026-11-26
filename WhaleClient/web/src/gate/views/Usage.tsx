@@ -5,7 +5,7 @@ import { signOut } from '../session.js'
 import { Recharge } from './Recharge.js'
 import { AccountDialog } from './AccountDialog.js'
 import { AppDialog } from './AppDialog.js'
-import { Billing } from './Billing.js'
+import { BillingContent } from './Billing.js'
 
 type Self = { username?: string; quota?: number; used_quota?: number; request_count?: number }
 type LogRow = {
@@ -185,6 +185,12 @@ const Recharge = ({
   const [status, setStatus] = useState<'idle' | 'waiting' | 'paid' | 'timeout'>('idle')
 
   useEffect(() => {
+    const onHash = () => setBillingView(location.hash === '#billing')
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+
+  useEffect(() => {
     const sync = () => setAvatar(readAvatar() || 'brand-avatar.png')
     window.addEventListener('whaleclient:avatar', sync)
     return () => window.removeEventListener('whaleclient:avatar', sync)
@@ -323,7 +329,7 @@ export const Usage = () => {
   const [accountOpen, setAccountOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [appOpen, setAppOpen] = useState(false)
-  const [billingOpen, setBillingOpen] = useState(false)
+  const [billingView, setBillingView] = useState(() => location.hash === '#billing')
   const [avatar, setAvatar] = useState<string>(() => readAvatar() || 'brand-avatar.png')
   const [error, setError] = useState('')
 
@@ -406,10 +412,10 @@ export const Usage = () => {
             <IconWallet />
             充值
           </button>
-          <button type="button" onClick={() => setBillingOpen(true)}>
+          <a href="#billing" className={billingView ? 'on' : ''}>
             <IconBill />
             账单
-          </button>
+          </a>
         </nav>
         <a className="pf-cta" href="#chat">
           <IconChat />
@@ -432,6 +438,11 @@ export const Usage = () => {
         ) : null}
       </aside>
 
+      {billingView ? (
+        <main className="pf-main">
+          <BillingContent />
+        </main>
+      ) : (
       <main className="pf-main">
         <h1 className="pf-title">用量信息</h1>
         <div className="pf-note">所有日期均按 GMT+8 时间显示，数据可能有 5 分钟延迟</div>
@@ -504,6 +515,7 @@ export const Usage = () => {
 
         <Chart rows={days} unit={unit} rate={rate} />
       </main>
+      )}
 
       {recharging && auth ? (
         <Recharge

@@ -2579,9 +2579,9 @@ select {
 
 /* 账单 */
 .bill-mask { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(15,23,42,.45); }
-.bill-panel { width: min(980px, 94vw); max-height: 84vh; overflow: auto; background: #1b1e24; color: #e5e7eb; border-radius: 14px; padding: 22px; }
+.bill-page { color: #e5e7eb; }
 .bill-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.bill-head h2 { margin: 0; font-size: 24px; color: #f3f4f6; }
+.bill-head h2 { margin: 0 0 8px; font-size: 24px; color: #f3f4f6; }
 .bill-links { display: flex; gap: 14px; }
 .bill-links button { background: transparent; color: #cbd5e1; padding: 4px 2px; }
 .bill-close { color: #94a3b8; }

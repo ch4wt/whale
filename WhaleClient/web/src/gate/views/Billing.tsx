@@ -20,7 +20,7 @@ const statusText = (status: string) => {
   return status || '—'
 }
 
-export const Billing = ({ onClose }: { onClose: () => void }) => {
+export const BillingContent = () => {
   const [rows, setRows] = useState<TopUp[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -41,14 +41,12 @@ export const Billing = ({ onClose }: { onClose: () => void }) => {
   }, [])
 
   return (
-    <div className='bill-mask' onClick={onClose}>
-      <div className='bill-panel' onClick={(event) => event.stopPropagation()}>
+    <div className='bill-page'>
         <div className='bill-head'>
           <h2>账单</h2>
           <div className='bill-links'>
             <button type='button'>退款管理</button>
             <button type='button'>发票管理</button>
-            <button type='button' className='bill-close' onClick={onClose}>关闭</button>
           </div>
         </div>
         <div className='bill-tabs'>
@@ -84,7 +82,6 @@ export const Billing = ({ onClose }: { onClose: () => void }) => {
             </tbody>
           </table>
         )}
-      </div>
     </div>
   )
 }
