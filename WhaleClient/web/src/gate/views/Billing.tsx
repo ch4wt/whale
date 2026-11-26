@@ -25,6 +25,7 @@ export const BillingContent = () => {
   const [tab, setTab] = useState<'topup' | 'gift'>('topup')
   const [self, setSelf] = useState<{ quota?: number; used_quota?: number } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [gifts, setGifts] = useState<{ id: number; amount: number; created_at: number; expires_at: number; status: string; note: string }[]>([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -45,6 +46,13 @@ export const BillingContent = () => {
         setRows(items)
       })
       .catch((err: unknown) => setError((err as Error).message))
+    request<{ data?: { items?: { id: number; amount: number; created_at: number; expires_at: number; status: string; note: string }[] } }>(
+      auth.server,
+      '/api/user/gift/self',
+      { method: 'GET', bearer: auth.token }
+    )
+      .then((res) => setGifts((res as { data?: { items?: [] } }).data?.items ?? []))
+      .catch(() => undefined)
       .finally(() => setLoading(false))
   }, [])
 
@@ -67,12 +75,34 @@ export const BillingContent = () => {
         </div>
         {error ? <div className='bill-error'>{error}</div> : null}
         {tab === 'gift' ? (
-          <div className='bill-gift'>
-            <p>新用户赠金：¥{((68000 / 500000 * 7.3) * 0).toFixed(2)}</p>
-            <p className='bill-tip'>
-              赠送记录暂未单独记账，当前赠金体现在账户余额里。需要明细请后续在后台补账。
-            </p>
-          </div>
+          gifts.length === 0 ? (
+            <div className='bill-empty'>还没有赠送记录</div>
+          ) : (
+            <table className='bill-table'>
+              <thead>
+                <tr>
+                  <th>订单编号</th>
+                  <th>状态</th>
+                  <th>金额</th>
+                  <th>创建时间</th>
+                  <th>过期时间</th>
+                  <th>备注</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gifts.map((g) => (
+                  <tr key={g.id}>
+                    <td className='mono'>gift-{g.id}</td>
+                    <td>{g.status === 'expired' ? '已失效' : '生效中'}</td>
+                    <td>¥{g.amount.toFixed(2)}</td>
+                    <td>{new Date(g.created_at * 1000).toLocaleString('zh-CN')}</td>
+                    <td>{new Date(g.expires_at * 1000).toLocaleString('zh-CN')}</td>
+                    <td><span className='bill-tag'>{g.note}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
         ) : loading ? (
           <div className='bill-empty'>加载中…</div>
         ) : rows.length === 0 ? (
