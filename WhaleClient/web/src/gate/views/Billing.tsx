@@ -45,9 +45,15 @@ export const Billing = ({ onClose }: { onClose: () => void }) => {
       <div className='bill-panel' onClick={(event) => event.stopPropagation()}>
         <div className='bill-head'>
           <h2>账单</h2>
-          <button type='button' onClick={onClose}>
-            关闭
-          </button>
+          <div className='bill-links'>
+            <button type='button'>退款管理</button>
+            <button type='button'>发票管理</button>
+            <button type='button' className='bill-close' onClick={onClose}>关闭</button>
+          </div>
+        </div>
+        <div className='bill-tabs'>
+          <button type='button' className='on'>充值账单</button>
+          <button type='button'>赠送账单</button>
         </div>
         {error ? <div className='bill-error'>{error}</div> : null}
         {loading ? (
