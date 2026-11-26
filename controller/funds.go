@@ -582,6 +582,7 @@ func AddUserQuota(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
+	_ = model.AddGiftRecord(req.UserId, delta, "管理员调整")
 	model.RecordLog(req.UserId, model.LogTypeManage,
 		common.NewMessage("Gift adjusted by admin: {{delta}}", map[string]any{
 			"delta": logger.FormatQuota(delta),
@@ -684,12 +685,12 @@ func GetPaymentInfo(c *gin.Context) {
 	}})
 }
 
-// GetSelfGiftRecords 当前用户的赠金流水（由日志推导）
+// GetSelfGiftRecords 当前用户的赠金流水（含有效期）
 func GetSelfGiftRecords(c *gin.Context) {
 	userId := c.GetInt("id")
-	var logs []model.Log
-	model.LOG_DB.Where("user_id = ? AND (content LIKE ? OR content LIKE ?)", userId, "%bonus%", "%Gift adjusted%").
-		Order("id desc").Limit(100).Find(&logs)
+	var rows []model.GiftRecord
+	_ = model.DB.AutoMigrate(&model.GiftRecord{})
+	model.DB.Where("user_id = ?", userId).Order("id desc").Limit(100).Find(&rows)
 	type item struct {
 		Id        int     `json:"id"`
 		Amount    float64 `json:"amount"`
@@ -698,20 +699,22 @@ func GetSelfGiftRecords(c *gin.Context) {
 		Status    string  `json:"status"`
 		Note      string  `json:"note"`
 	}
-	out := make([]item, 0, len(logs))
-	for _, l := range logs {
-		amount := 0.0
-		if l.Quota != 0 {
-			amount = math.Round(toCNY(float64(l.Quota))*100) / 100
+	out := make([]item, 0, len(rows))
+	now := time.Now().Unix()
+	for _, r := range rows {
+		status := r.Status
+		if r.ExpiresAt > 0 && r.ExpiresAt < now {
+			status = "expired"
 		}
 		out = append(out, item{
-			Id:        l.Id,
-			Amount:    amount,
-			CreatedAt: l.CreatedAt,
-			ExpiresAt: l.CreatedAt + 7*24*3600,
-			Status:    "expired",
-			Note:      "新用户赠金",
+			Id:        r.Id,
+			Amount:    math.Round(toCNY(float64(r.Amount))*100) / 100,
+			CreatedAt: r.CreatedAt,
+			ExpiresAt: r.ExpiresAt,
+			Status:    status,
+			Note:      r.Note,
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{"items": out}})
+}
 }

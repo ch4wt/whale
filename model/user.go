@@ -680,6 +680,9 @@ func (user *User) Insert(inviterId int) error {
 				return err
 			}
 			user.Quota = common.QuotaForNewUser
+			if common.QuotaForNewUser > 0 {
+				_ = AddGiftRecord(user.Id, common.QuotaForNewUser, "新用户赠金")
+			}
 			user.AffCode = common.GetRandomString(4)
 
 			// 初始化用户设置，包括默认的边栏配置
