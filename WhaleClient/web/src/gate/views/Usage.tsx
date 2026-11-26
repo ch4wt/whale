@@ -3,6 +3,8 @@ import { fetchSelf, loadAuth } from '../api/auth.js'
 import { request } from '../api/http.js'
 import { signOut } from '../session.js'
 import { Recharge } from './Recharge.js'
+import { AccountDialog } from './AccountDialog.js'
+import { AppDialog } from './AppDialog.js'
 
 type Self = { username?: string; quota?: number; used_quota?: number; request_count?: number }
 type LogRow = {
@@ -311,6 +313,9 @@ export const Usage = () => {
   const [quotaRows, setQuotaRows] = useState<QuotaRow[]>([])
   const [range, setRange] = useState(30)
   const [recharging, setRecharging] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [appOpen, setAppOpen] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -396,10 +401,20 @@ export const Usage = () => {
           进入对话
         </a>
 
-        <div className="pf-account">
+        <div className="pf-account" role="button" tabIndex={0} onClick={() => setMenuOpen((v) => !v)}>
           <img src="brand-avatar.png" alt="" />
           <span>{self?.username || '未登录'}</span>
+          <span className="pf-account-more">…</span>
         </div>
+        {menuOpen ? (
+          <div className="pf-menu">
+            <button type="button" onClick={() => setAppOpen(true)}>下载手机应用</button>
+            <a href="#usage">用量与余额</a>
+            <a href="#chat">进入对话</a>
+            <button type="button" onClick={() => setAccountOpen(true)}>账号管理</button>
+            <button type="button" className="danger" onClick={signOut}>退出登录</button>
+          </div>
+        ) : null}
       </aside>
 
       <main className="pf-main">

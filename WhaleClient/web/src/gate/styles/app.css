@@ -2549,3 +2549,30 @@ select {
 .lp-copy input {
   font-size: 11px;
 }
+
+/* 用量页账号菜单 */
+.pf-account { cursor: pointer; }
+.pf-account-more { margin-left: auto; color: #94a3b8; }
+.pf-menu {
+  margin: 6px 0 10px;
+  padding: 6px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pf-menu a, .pf-menu button {
+  text-align: left;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #334155;
+  font-size: 13px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.pf-menu a:hover, .pf-menu button:hover { background: #f1f5f9; }
+.pf-menu .danger { color: #dc2626; }
