@@ -2657,3 +2657,5 @@ select {
 .bill-tip { color: #8b93a1; margin-top: 8px; }
 
 .bill-tag { padding: 2px 6px; border: 1px solid #4b5563; border-radius: 4px; font-size: 11px; color: #cbd5e1; }
+
+.pf-nav a:focus, .pf-nav button:focus { outline: none; }

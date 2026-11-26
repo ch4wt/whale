@@ -404,7 +404,7 @@ export const Usage = () => {
           <span className="pf-badge">开放平台</span>
         </a>
         <nav className="pf-nav">
-          <a className="on" href="#usage">
+          <a className={billingView ? "" : "on"} href="#usage">
             <IconChart />
             用量信息
           </a>
