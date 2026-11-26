@@ -26,6 +26,8 @@ import { openSettings } from '../settings/settingsDialogState.js'
 import { closeMobileSider, useMobileSider } from './mobileSiderState.js'
 import { SessionItem } from './SessionItem.js'
 import { fetchSelf, loadAuth, readAvatar, saveAvatar } from '../../../gate/api/auth.js'
+import { createPortal } from 'react-dom'
+
 import { DownloadPopover } from '../../../gate/views/DownloadPopover.js'
 import { AppDialog, isMobile } from '../../../gate/views/AppDialog.js'
 import { AccountDialog } from '../../../gate/views/AccountDialog.js'
@@ -102,6 +104,7 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
   const [pinVersion, setPinVersion] = useState(0)
   const [hoverList, setHoverList] = useState(false)
   const [hoverDownload, setHoverDownload] = useState(false)
+  const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const [accountOpen, setAccountOpen] = useState(false)
   const [avatar, setAvatar] = useState<string | null>(() => readAvatar())
   const [userName, setUserName] = useState(() => readSession()?.username ?? '')
@@ -373,14 +376,28 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
             <div className={styles.menu}>
               <div
                 className={styles.downloadWrap}
-                onMouseEnter={() => setHoverDownload(true)}
+                onMouseEnter={(event) => {
+                  setAnchor(event.currentTarget.getBoundingClientRect())
+                  setHoverDownload(true)
+                }}
                 onMouseLeave={() => setHoverDownload(false)}
               >
                 <button type="button" className={styles.menuItem} onClick={() => setAppOpen(true)}>
                   <IconDownloadOutline16 />
                   下载手机应用
                 </button>
-                {hoverDownload ? <DownloadPopover /> : null}
+                {hoverDownload && anchor
+                  ? createPortal(
+                      <DownloadPopover
+                        style={{
+                          position: 'fixed',
+                          left: anchor.right + 8,
+                          bottom: Math.max(12, window.innerHeight - anchor.bottom - 8),
+                        }}
+                      />,
+                      document.body
+                    )
+                  : null}
               </div>
               <a className={styles.menuItem} href="#usage" target="_blank" rel="noreferrer">
                 <IconDataOutline16 />

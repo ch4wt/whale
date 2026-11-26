@@ -2592,10 +2592,7 @@ select {
 
 /* 侧栏悬停下载卡片（两栏） */
 .dl-card {
-  position: absolute;
-  left: calc(100% + 6px);
-  bottom: -8px;
-  z-index: 200;
+  z-index: 9999;
   width: 340px;
   max-height: calc(100vh - 24px);
   overflow-y: auto;

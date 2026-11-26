@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import { useMemo, useState } from 'react'
 
 import qrcode from '../../vendor/qrcode-generator.js'
@@ -9,7 +10,7 @@ const makeQr = (data: string) => {
   return qr.createSvgTag({ cellSize: 3, margin: 2 })
 }
 
-export const DownloadPopover = () => {
+export const DownloadPopover = ({ style }: { style?: CSSProperties }) => {
   const url = `${location.origin}/download/whalegirl.apk`
   const pageUrl = `${location.origin}/#chat`
   const svgApk = useMemo(() => makeQr(url), [url])
@@ -27,7 +28,7 @@ export const DownloadPopover = () => {
   }
 
   return (
-    <div className='dl-card'>
+    <div className='dl-card' style={style}>
       <div className='dl-block'>
         <div className='dl-head'>安卓 · 下载安装包</div>
         <a className='dl-btn' href={url} download>
