@@ -5,6 +5,7 @@ import { signOut } from '../session.js'
 import { Recharge } from './Recharge.js'
 import { AccountDialog } from './AccountDialog.js'
 import { AppDialog } from './AppDialog.js'
+import { Billing } from './Billing.js'
 
 type Self = { username?: string; quota?: number; used_quota?: number; request_count?: number }
 type LogRow = {
@@ -316,6 +317,7 @@ export const Usage = () => {
   const [accountOpen, setAccountOpen] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [appOpen, setAppOpen] = useState(false)
+  const [billingOpen, setBillingOpen] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -391,7 +393,7 @@ export const Usage = () => {
             <IconWallet />
             充值
           </button>
-          <button type="button" onClick={() => setRecharging(true)}>
+          <button type="button" onClick={() => setBillingOpen(true)}>
             <IconBill />
             账单
           </button>

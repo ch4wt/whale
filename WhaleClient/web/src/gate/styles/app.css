@@ -2576,3 +2576,16 @@ select {
 }
 .pf-menu a:hover, .pf-menu button:hover { background: #f1f5f9; }
 .pf-menu .danger { color: #dc2626; }
+
+/* 账单 */
+.bill-mask { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; background: rgba(15,23,42,.45); }
+.bill-panel { width: min(920px, 92vw); max-height: 80vh; overflow: auto; background: #fff; border-radius: 14px; padding: 20px; }
+.bill-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.bill-head h2 { margin: 0; font-size: 20px; }
+.bill-head button { border: 0; background: #eef2f7; border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.bill-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.bill-table th { text-align: left; padding: 10px 8px; color: #64748b; font-weight: 500; border-bottom: 1px solid #e2e8f0; }
+.bill-table td { padding: 12px 8px; border-bottom: 1px solid #f1f5f9; color: #0f172a; }
+.bill-table .mono { font-family: ui-monospace, monospace; font-size: 12px; }
+.bill-empty, .bill-error { padding: 24px 8px; color: #64748b; font-size: 13px; }
+.bill-error { color: #dc2626; }
