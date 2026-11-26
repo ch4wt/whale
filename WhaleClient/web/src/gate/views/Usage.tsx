@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { fetchSelf, loadAuth } from '../api/auth.js'
+import { fetchSelf, loadAuth, readAvatar, saveAvatar } from '../api/auth.js'
 import { request } from '../api/http.js'
 import { signOut } from '../session.js'
 import { Recharge } from './Recharge.js'
@@ -185,6 +185,12 @@ const Recharge = ({
   const [status, setStatus] = useState<'idle' | 'waiting' | 'paid' | 'timeout'>('idle')
 
   useEffect(() => {
+    const sync = () => setAvatar(readAvatar() || 'brand-avatar.png')
+    window.addEventListener('whaleclient:avatar', sync)
+    return () => window.removeEventListener('whaleclient:avatar', sync)
+  }, [])
+
+  useEffect(() => {
     request<{ pay_methods?: Method[]; min_topup?: number }>(auth.server, '/api/user/topup/info', {
       method: 'GET',
       bearer: auth.token,
@@ -318,6 +324,7 @@ export const Usage = () => {
   const [menuOpen, setMenuOpen] = useState(false)
   const [appOpen, setAppOpen] = useState(false)
   const [billingOpen, setBillingOpen] = useState(false)
+  const [avatar, setAvatar] = useState<string>(() => readAvatar() || 'brand-avatar.png')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -342,6 +349,11 @@ export const Usage = () => {
         ])
         if (!alive) return
         setSelf((profile ?? {}) as Self)
+        const remote = (profile as { avatar?: string } | null)?.avatar
+        if (remote) {
+          saveAvatar(remote)
+          setAvatar(remote)
+        }
         setStatus(site ?? {})
         setLogs(page?.items ?? [])
         setQuotaRows(Array.isArray(data) ? data : [])
@@ -404,7 +416,7 @@ export const Usage = () => {
         </a>
 
         <div className="pf-account" role="button" tabIndex={0} onClick={() => setMenuOpen((v) => !v)}>
-          <img src="brand-avatar.png" alt="" />
+          <img src={avatar} alt="" />
           <span>{self?.username || '未登录'}</span>
           <span className="pf-account-more">…</span>
         </div>
