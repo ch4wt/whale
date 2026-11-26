@@ -35,7 +35,7 @@ export const DownloadPopover = () => {
         </a>
         <div className='dl-qr' dangerouslySetInnerHTML={{ __html: svgApk }} />
         <div className='dl-copy'>
-          <input readOnly value={url} onFocus={(event) => event.currentTarget.select()} />
+          <span className="link-text">{url}</span>
           <button type='button' onClick={() => void copyText(url, 'apk')}>
             {copied === 'apk' ? '已复制' : '复制'}
           </button>
@@ -51,7 +51,7 @@ export const DownloadPopover = () => {
         </ol>
         <div className='dl-qr' dangerouslySetInnerHTML={{ __html: svgPage }} />
         <div className='dl-copy'>
-          <input readOnly value={pageUrl} onFocus={(event) => event.currentTarget.select()} />
+          <span className="link-text">{pageUrl}</span>
           <button type='button' onClick={() => void copyText(pageUrl, 'page')}>
             {copied === 'page' ? '已复制' : '复制'}
           </button>

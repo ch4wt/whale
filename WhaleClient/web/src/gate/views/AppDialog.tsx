@@ -43,7 +43,7 @@ const AppDialog = ({ onClose }: { onClose: () => void }) => {
           </a>
           <div className="lp-qr" dangerouslySetInnerHTML={{ __html: svgApk }} />
           <div className="lp-copy">
-            <input readOnly value={url} onFocus={(event) => event.currentTarget.select()} />
+            <span className="link-text">{url}</span>
             <button type="button" onClick={() => void copyText(url, 'apk')}>
               {copied === 'apk' ? '已复制' : '复制链接'}
             </button>
@@ -60,7 +60,7 @@ const AppDialog = ({ onClose }: { onClose: () => void }) => {
           </ol>
           <div className="lp-qr" dangerouslySetInnerHTML={{ __html: svgPage }} />
           <div className="lp-copy">
-            <input readOnly value={pageUrl} onFocus={(event) => event.currentTarget.select()} />
+            <span className="link-text">{pageUrl}</span>
             <button type="button" onClick={() => void copyText(pageUrl, 'page')}>
               {copied === 'page' ? '已复制' : '复制链接'}
             </button>

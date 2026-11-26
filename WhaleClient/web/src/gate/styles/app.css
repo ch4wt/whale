@@ -2616,3 +2616,23 @@ select {
 .dl-copy { display: flex; gap: 6px; }
 .dl-copy input { flex: 1; min-width: 0; height: 26px; border: 1px solid #e2e8f0; border-radius: 7px; padding: 0 8px; font-size: 10px; color: #475569; }
 .dl-copy button { height: 26px; padding: 0 10px; border: 0; border-radius: 7px; background: #4176e6; color: #fff; font-size: 12px; cursor: pointer; }
+
+/* 链接展示（不用输入框，保证一定可见） */
+.link-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #1f252e;
+  font-size: 11px;
+  font-family: ui-monospace, monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dl-copy .link-text { height: 26px; }
