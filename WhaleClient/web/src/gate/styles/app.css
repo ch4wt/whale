@@ -2640,3 +2640,15 @@ select {
   text-overflow: ellipsis;
 }
 .dl-copy .link-text { height: 26px; }
+
+/* 开放平台角标 */
+.pf-badge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 16px;
+  color: #64748b;
+  letter-spacing: 1px;
+}

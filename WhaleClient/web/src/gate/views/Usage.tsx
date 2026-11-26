@@ -394,7 +394,8 @@ export const Usage = () => {
       <aside className="pf-side">
         <a className="pf-logo" href="/">
           <img src="brand-avatar.png" alt="" />
-          <span>Whale Girl</span>
+          <span>小虎鲸</span>
+          <span className="pf-badge">开放平台</span>
         </a>
         <nav className="pf-nav">
           <a className="on" href="#usage">
