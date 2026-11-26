@@ -22,12 +22,20 @@ const statusText = (status: string) => {
 
 export const BillingContent = () => {
   const [rows, setRows] = useState<TopUp[]>([])
+  const [tab, setTab] = useState<'topup' | 'gift'>('topup')
+  const [self, setSelf] = useState<{ quota?: number; used_quota?: number } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
     const auth = loadAuth()
     if (!auth) return
+    request<{ quota?: number; used_quota?: number }>(auth.server, '/api/user/self', {
+      method: 'GET',
+      bearer: auth.token,
+    })
+      .then((me) => setSelf(me as { quota?: number; used_quota?: number }))
+      .catch(() => undefined)
     request<{ data?: { items?: TopUp[] }; items?: TopUp[] }>(auth.server, '/api/user/topup/self?p=1&size=50', {
       method: 'GET',
       bearer: auth.token,
@@ -50,11 +58,22 @@ export const BillingContent = () => {
           </div>
         </div>
         <div className='bill-tabs'>
-          <button type='button' className='on'>充值账单</button>
-          <button type='button'>赠送账单</button>
+          <button type='button' className={tab === 'topup' ? 'on' : ''} onClick={() => setTab('topup')}>
+            充值账单
+          </button>
+          <button type='button' className={tab === 'gift' ? 'on' : ''} onClick={() => setTab('gift')}>
+            赠送账单
+          </button>
         </div>
         {error ? <div className='bill-error'>{error}</div> : null}
-        {loading ? (
+        {tab === 'gift' ? (
+          <div className='bill-gift'>
+            <p>新用户赠金：¥{((68000 / 500000 * 7.3) * 0).toFixed(2)}</p>
+            <p className='bill-tip'>
+              赠送记录暂未单独记账，当前赠金体现在账户余额里。需要明细请后续在后台补账。
+            </p>
+          </div>
+        ) : loading ? (
           <div className='bill-empty'>加载中…</div>
         ) : rows.length === 0 ? (
           <div className='bill-empty'>还没有充值记录</div>

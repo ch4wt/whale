@@ -2652,3 +2652,6 @@ select {
   color: #64748b;
   letter-spacing: 1px;
 }
+
+.bill-gift { padding: 18px 8px; color: #cbd5e1; font-size: 13px; }
+.bill-tip { color: #8b93a1; margin-top: 8px; }
