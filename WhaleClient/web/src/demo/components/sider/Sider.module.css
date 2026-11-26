@@ -451,6 +451,7 @@
 
 .menu {
   position: absolute;
+  overflow: visible;
   left: 4px;
   bottom: calc(100% + 8px);
   z-index: 12;
@@ -630,4 +631,5 @@
 
 .downloadWrap {
   position: relative;
+  z-index: 30;
 }
