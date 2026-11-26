@@ -1,0 +1,23 @@
+package com.tun.whale;
+
+/** 构建期注入的常量，由 build.sh 从 template/BuildConfig.java.in 生成。 */
+public final class BuildConfig {
+    public static final String UPSTREAM = "@UPSTREAM@";
+    public static final String VERSION_NAME = "@VERSION_NAME@";
+    /** 上游是 ModelHub 这类 OpenAI 风格网关时，去掉 /anthropic 前缀 */
+    public static final boolean STRIP_ANTHROPIC = @STRIP_ANTHROPIC@;
+    /** 侧边栏顶部名称 */
+    public static final String BRAND_NAME = "@BRAND_NAME@";
+    /** 头像资源路径，空串表示不显示 */
+    public static final String BRAND_AVATAR = "@BRAND_AVATAR@";
+    /** 左下角账号名 */
+    public static final String ACCOUNT_NAME = "@ACCOUNT_NAME@";
+    /** 本机服务端口段的起点；两个变体同装时必须错开 */
+    public static final int PORT_BASE = @PORT_BASE@;
+    /** 首次启动预填的 API Key；空串表示不预填 */
+    public static final String DEFAULT_API_KEY = "@DEFAULT_API_KEY@";
+    public static final int VERSION_CODE = @VERSION_CODE@;
+
+    private BuildConfig() {
+    }
+}

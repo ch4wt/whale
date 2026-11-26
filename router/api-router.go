@@ -169,6 +169,7 @@ func SetApiRouter(router *gin.Engine) {
 				adminRoute.GET("/platform/keys", controller.GetPlatformKeys)
 				adminRoute.GET("/platform/chat-logs", controller.GetChatLogs)
 				adminRoute.GET("/platform/user/:id", controller.GetUserDetail)
+				adminRoute.GET("/platform/payment", controller.GetPaymentInfo)
 				adminRoute.POST("/platform/keys", controller.SavePlatformKey)
 				adminRoute.DELETE("/platform/keys/:id", controller.DeletePlatformKey)
 				adminRoute.GET("/platform/settings", controller.GetPlatformSettings)

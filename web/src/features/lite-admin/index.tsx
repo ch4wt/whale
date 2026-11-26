@@ -62,6 +62,15 @@ type ChatLog = {
   created_at: number
 }
 
+type PaymentInfo = {
+  epay: { enabled: boolean; pay_address: string; merchant_id: string; key_set: boolean }
+  stripe: { enabled: boolean; secret_set: boolean; webhook_secret_set: boolean }
+  price: number
+  min_top_up: number
+  usd_rate: number
+  pay_methods: { name?: string; type?: string }[]
+}
+
 type PlatformKey = {
   id: number
   name: string
@@ -165,6 +174,7 @@ export function LiteAdmin() {
   const [logUserId, setLogUserId] = useState<number | null>(null)
   const [logUserName, setLogUserName] = useState('')
   const [detail, setDetail] = useState<UserDetail | null>(null)
+  const [payment, setPayment] = useState<PaymentInfo | null>(null)
   const [colWidths, setColWidths] = useState<number[]>([150, 100, 120, 100, 100, 110])
   const [giftEditing, setGiftEditing] = useState<number | null>(null)
   const [giftDraft, setGiftDraft] = useState('')
@@ -201,6 +211,10 @@ export function LiteAdmin() {
         setGiftInput(String(settingData.data.new_user_gift))
         setRatioInput(String(settingData.data.group_ratio))
       }
+      const payData = await getJson<{ data: PaymentInfo }>('/api/user/platform/payment').catch(
+        () => null
+      )
+      if (payData?.data) setPayment(payData.data)
     } catch (err) {
       setError((err as Error).message)
     }
@@ -869,6 +883,43 @@ export function LiteAdmin() {
                 <Button onClick={saveSettings} disabled={saving}>
                   {saving ? '保存中…' : '保存'}
                 </Button>
+                <div className='space-y-2 rounded-lg border p-3 text-sm'>
+                  <div className='font-medium'>充值收款信息</div>
+                  {payment ? (
+                    <>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>易支付</span>
+                        <span>
+                          {payment.epay.enabled
+                            ? `${payment.epay.pay_address || '未填网关'} · 商户 ${payment.epay.merchant_id}`
+                            : '未启用'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>Stripe</span>
+                        <span>
+                          {payment.stripe.enabled
+                            ? `已配置${payment.stripe.webhook_secret_set ? '（含回调密钥）' : ''}`
+                            : '未启用'}
+                        </span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>单价</span>
+                        <span>¥{payment.price} / 美元</span>
+                      </div>
+                      <div className='flex justify-between'>
+                        <span className='text-muted-foreground'>最低充值</span>
+                        <span>¥{payment.min_top_up}</span>
+                      </div>
+                      <p className='text-muted-foreground text-xs'>
+                        密钥只显示是否配置。收款账户归谁，取决于开通商户时用的主体。
+                      </p>
+                    </>
+                  ) : (
+                    <p className='text-muted-foreground text-xs'>读取中…</p>
+                  )}
+                </div>
+
                 <div className='text-xs text-muted-foreground'>
                   当前生效值：赠金 {money(settings.new_user_gift)}／倍率 {settings.group_ratio}
                 </div>

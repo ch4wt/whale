@@ -5,6 +5,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/gin-gonic/gin"
@@ -645,5 +647,39 @@ func GetUserDetail(c *gin.Context) {
 		"used":          toCNY(float64(user.UsedQuota)),
 		"request_count": user.RequestCount,
 		"audits":        audits,
+	}})
+}
+
+// GetPaymentInfo 充值收款配置（密钥只返回是否已配置）
+func GetPaymentInfo(c *gin.Context) {
+	mask := func(value string) string {
+		if value == "" {
+			return ""
+		}
+		if len(value) <= 6 {
+			return "已配置"
+		}
+		return value[:4] + "…" + value[len(value)-2:]
+	}
+	epayHost := ""
+	if u, err := url.Parse(operation_setting.PayAddress); err == nil && u.Host != "" {
+		epayHost = u.Scheme + "://" + u.Host
+	}
+	c.JSON(http.StatusOK, gin.H{"success": true, "data": gin.H{
+		"epay": gin.H{
+			"enabled":     operation_setting.PayAddress != "" && operation_setting.EpayId != "",
+			"pay_address": epayHost,
+			"merchant_id": mask(operation_setting.EpayId),
+			"key_set":     operation_setting.EpayKey != "",
+		},
+		"stripe": gin.H{
+			"enabled":            setting.StripeApiSecret != "",
+			"secret_set":         setting.StripeApiSecret != "",
+			"webhook_secret_set": setting.StripeWebhookSecret != "",
+		},
+		"price":       operation_setting.Price,
+		"min_top_up":  operation_setting.MinTopUp,
+		"usd_rate":    operation_setting.USDExchangeRate,
+		"pay_methods": operation_setting.PayMethods,
 	}})
 }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ds_blue">#4D6BFE</color>
+    <color name="ds_bg">#FFFFFF</color>
+    <color name="ds_bg_dark">#1A1A1A</color>
+    <color name="icon_bg">#EAF0FF</color>
+</resources>
