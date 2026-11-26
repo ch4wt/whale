@@ -2544,3 +2544,8 @@ select {
   font-weight: 600;
   color: #1f2937;
 }
+
+/* 复制链接输入框：缩小字号，尽量显示完整地址 */
+.lp-copy input {
+  font-size: 11px;
+}
