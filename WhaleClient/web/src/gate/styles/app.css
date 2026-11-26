@@ -2518,3 +2518,13 @@ select {
   border-radius: 12px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
 }
+
+/* 安装说明步骤 */
+.lp-steps {
+  margin: 4px 0 12px;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.9;
+  color: #4b5563;
+  text-align: left;
+}

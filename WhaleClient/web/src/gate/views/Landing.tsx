@@ -65,19 +65,9 @@ export const Landing = () => {
         </div>
         <div className="lp-nav-right">
           {isMobile() ? (
-            <a
-              className="lp-getapp"
-              href="download/whalegirl.apk"
-              download
-              onClick={(event) => {
-                if (isIOS()) {
-                  event.preventDefault()
-                  window.alert(IOS_HINT)
-                }
-              }}
-            >
+            <button type="button" className="lp-getapp" onClick={() => setAppOpen(true)}>
               获取 APP
-            </a>
+            </button>
           ) : (
             <button type="button" className="lp-getapp" onClick={() => setAppOpen(true)}>
               获取 APP
