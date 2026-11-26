@@ -512,6 +512,9 @@ export const Usage = () => {
           onPaid={() => undefined}
         />
       ) : null}
+      {billingOpen ? <Billing onClose={() => setBillingOpen(false)} /> : null}
+      {accountOpen ? <AccountDialog onClose={() => setAccountOpen(false)} /> : null}
+      {appOpen ? <AppDialog onClose={() => setAppOpen(false)} /> : null}
     </div>
   )
 }
