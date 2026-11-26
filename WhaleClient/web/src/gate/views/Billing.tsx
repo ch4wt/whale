@@ -60,10 +60,6 @@ export const BillingContent = () => {
     <div className='bill-page'>
         <div className='bill-head'>
           <h2>账单</h2>
-          <div className='bill-links'>
-            <button type='button'>退款管理</button>
-            <button type='button'>发票管理</button>
-          </div>
         </div>
         <div className='bill-tabs'>
           <button type='button' className={tab === 'topup' ? 'on' : ''} onClick={() => setTab('topup')}>
