@@ -28,7 +28,6 @@ import { SessionItem } from './SessionItem.js'
 import { fetchSelf, loadAuth, readAvatar, saveAvatar } from '../../../gate/api/auth.js'
 import { AppDialog, isMobile } from '../../../gate/views/AppDialog.js'
 import { AccountDialog } from '../../../gate/views/AccountDialog.js'
-import { DownloadPopover } from '../../../gate/views/DownloadPopover.js'
 import { SearchDialog } from './SearchDialog.js'
 import styles from './Sider.module.css'
 
@@ -371,24 +370,10 @@ export const Sider = ({ mobile = false }: { mobile?: boolean }) => {
 
           {menuOpen ? (
             <div className={styles.menu}>
-              <div
-                className={styles.downloadWrap}
-                onMouseEnter={() => setHoverDownload(true)}
-                onMouseLeave={() => setHoverDownload(false)}
-              >
-                {isMobile() ? (
-                  <a className={styles.menuItem} href="download/whalegirl.apk" download>
-                    <IconDownloadOutline16 />
-                    下载手机应用
-                  </a>
-                ) : (
-                  <button type="button" className={styles.menuItem} onClick={() => setAppOpen(true)}>
-                    <IconDownloadOutline16 />
-                    下载手机应用
-                  </button>
-                )}
-                {hoverDownload ? <DownloadPopover /> : null}
-              </div>
+              <button type="button" className={styles.menuItem} onClick={() => setAppOpen(true)}>
+                <IconDownloadOutline16 />
+                下载手机应用
+              </button>
               <a className={styles.menuItem} href="#usage" target="_blank" rel="noreferrer">
                 <IconDataOutline16 />
                 用量与余额
